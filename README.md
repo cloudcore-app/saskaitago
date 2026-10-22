@@ -55,9 +55,9 @@ The build output is written to `dist/`. The macOS command creates a universal di
 
 ## Data and backups
 
-The desktop app keeps its data in the operating system's application data folder under the current user profile. The app stores data locally in a JSON workspace; it does not sync records to a cloud service. Back up the app data folder regularly if you use the program for business records.
+The desktop app keeps its data in the operating system's application data folder under the current user profile. Records stay in a local JSON workspace and are not automatically synced to a cloud service. In Program settings, export the workspace as JSON, an Excel-compatible `.xls` workbook, or a PDF report, then save the file wherever you choose.
 
-Only one app instance is supported at a time. Automatic backups, email delivery, Peppol/UBL, bank and accounting integrations, and editing issued invoices are not implemented.
+Only one app instance is supported at a time. Automatic backups, importing exported data into the app, email delivery, Peppol/UBL, bank and accounting integrations, and editing issued invoices are not implemented.
 
 ---
 
@@ -118,6 +118,6 @@ Sukūrimo failai pateikiami `dist/` aplanke. macOS komanda sukuria universalų d
 
 ### Duomenys ir atsarginės kopijos
 
-Darbalaukio programa duomenis saugo operacinės sistemos programų duomenų aplanke, dabartinio naudotojo profilyje. Įrašai laikomi vietiniame JSON faile ir nesinchronizuojami su debesijos paslauga. Jei programą naudojate verslo apskaitai, reguliariai kurkite šio aplanko atsargines kopijas.
+Darbalaukio programa duomenis saugo operacinės sistemos programų duomenų aplanke, dabartinio naudotojo profilyje. Įrašai laikomi vietiniame JSON faile ir automatiškai nesinchronizuojami su debesijos paslauga. Programos nustatymų skiltyje „Programa“ darbo vietą galite eksportuoti JSON, su „Excel“ suderinamu `.xls` arba PDF ataskaitos formatu ir išsaugoti pasirinktame aplanke.
 
-Vienu metu palaikomas vienas programos egzempliorius. Automatinės atsarginės kopijos, el. pašto siuntimas, Peppol/UBL, bankų bei apskaitos sistemų integracijos ir išrašytų sąskaitų redagavimas dar nepalaikomi.
+Vienu metu palaikomas vienas programos egzempliorius. Automatinės atsarginės kopijos, eksportuotų duomenų importavimas programoje, el. pašto siuntimas, Peppol/UBL, bankų bei apskaitos sistemų integracijos ir išrašytų sąskaitų redagavimas dar nepalaikomi.

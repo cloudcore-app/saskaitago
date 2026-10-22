@@ -16,6 +16,7 @@
     ["Klientų duomenys išsaugomi tik šiame kompiuteryje.", "Client data is stored on this computer only."],
     ["Veikia lokaliai", "Runs locally"], ["Duomenys lieka šiame kompiuteryje", "Your data stays on this computer"],
     ["Įmonės nustatymai", "Company settings"], ["Nustatymai", "Settings"], ["Tik šiame kompiuteryje", "On this computer only"],
+    ["Duomenų eksportas", "Data export"], ["Failo formatas", "File format"], ["Excel (.xls)", "Excel (.xls)"], ["PDF ataskaita", "PDF report"], ["Eksportuoti duomenis", "Export data"], ["Duomenys eksportuoti", "Data exported"], ["PDF ataskaita išsaugota", "PDF report saved"], ["PDF eksportas pasiekiamas darbalaukio programoje.", "PDF export is available in the desktop app."],
     ["Visos", "All"], ["Laukia apmokėjimo", "Awaiting payment"], ["Apmokėtos", "Paid"], ["Vėluoja", "Overdue"],
     ["Apmokėta iš viso", "Total paid"], ["Šį mėnesį išrašyta", "Issued this month"], ["neapmokėtos sąskaitos", "unpaid invoices"], ["apmokėtos sąskaitos", "paid invoices"], ["dokumentai", "documents"],
     ["Sąskaita faktūra", "Invoice"], ["PVM sąskaita faktūra", "VAT invoice"], ["Išankstinė sąskaita", "Pro forma invoice"], ["Kreditinė sąskaita", "Credit note"],

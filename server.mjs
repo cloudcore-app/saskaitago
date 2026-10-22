@@ -76,7 +76,7 @@ function amount(value) {
 async function handleApi(req, res, url) {
   const data = await loadData();
   if (req.method === "GET" && url.pathname === "/api/workspace") {
-    return json(res, 200, { settings: data.settings, clients: data.clients, invoices: data.invoices });
+    return json(res, 200, { settings: data.settings, counters: data.counters, clients: data.clients, invoices: data.invoices });
   }
   if (req.method === "PUT" && url.pathname === "/api/settings") {
     const input = await readBody(req);
