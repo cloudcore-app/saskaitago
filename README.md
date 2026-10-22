@@ -26,6 +26,10 @@ The **Desktop builds** workflow builds installers for all three operating system
 
 Builds are unsigned. Windows or macOS may show a security prompt when opening them. Signed and notarized distribution requires platform certificates and credentials.
 
+The `website/` folder contains the bilingual product landing page. Its download buttons read assets from the latest GitHub Release. To build and publish a release, update the app version in `package.json`, create a matching `v` tag (for example `v0.3.0`), and push the tag. The workflow builds all platforms and attaches their installers to the release.
+
+To preview the landing page locally, run `python3 -m http.server 8080 --directory website` and open <http://127.0.0.1:8080>.
+
 ## Run from source
 
 Requirements: Node.js 22 or newer and pnpm 11.5.0.
@@ -84,6 +88,10 @@ Dokumentuose galima taikyti 21 %, 9 %, 5 % arba 0 % PVM tarifą. Prieš naudodam
 | Linux | `.AppImage` ir `.deb` |
 
 Diegimo paketai nėra pasirašyti. Windows arba macOS gali parodyti saugos įspėjimą. Pasirašytam ir notarizuotam platinimui reikalingi platformų sertifikatai ir prisijungimo duomenys.
+
+`website/` aplanke yra dvikalbis programos nukreipimo puslapis. Atsisiuntimo mygtukai automatiškai susiejami su naujausio GitHub leidimo failais. Norėdami paruošti ir paskelbti leidimą, atnaujinkite programos versiją `package.json`, sukurkite atitinkamą `v` žymą (pavyzdžiui, `v0.3.0`) ir nusiųskite ją į GitHub. Darbo eiga sukurs paketus visoms platformoms ir pridės juos prie leidimo.
+
+Norėdami peržiūrėti puslapį vietoje, paleiskite `python3 -m http.server 8080 --directory website` ir atidarykite <http://127.0.0.1:8080>.
 
 ### Paleidimas iš išeities kodo
 
