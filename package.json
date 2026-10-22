@@ -1,13 +1,34 @@
 {
   "name": "saskaitago",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "description": "Local-first Lithuanian invoicing for small businesses",
+  "author": "CloudCore",
+  "license": "MIT",
+  "packageManager": "pnpm@11.5.0",
+  "main": "electron/main.mjs",
   "scripts": {
-    "start": "node server.mjs",
-    "dev": "node --watch server.mjs"
+    "dev": "electron .",
+    "start": "electron .",
+    "serve": "node server.mjs",
+    "dist:linux": "electron-builder --linux AppImage deb",
+    "dist:windows": "electron-builder --win nsis",
+    "dist:mac": "electron-builder --mac dmg"
   },
-  "engines": {
-    "node": ">=20"
-  }
+  "devDependencies": {
+    "electron": "^45.0.0",
+    "electron-builder": "^26.0.0"
+  },
+  "build": {
+    "appId": "lt.saskaitago.desktop",
+    "productName": "SaskaitaGO",
+    "asar": true,
+    "directories": { "output": "dist", "buildResources": "build" },
+    "files": ["electron/**", "public/**", "server.mjs", "package.json", "README.md"],
+    "linux": { "category": "Office", "target": ["AppImage", "deb"] },
+    "win": { "target": ["nsis"] },
+    "nsis": { "oneClick": false, "allowToChangeInstallationDirectory": true, "createDesktopShortcut": true },
+    "mac": { "target": ["dmg"], "category": "public.app-category.business" }
+  },
+  "engines": { "node": ">=22" }
 }

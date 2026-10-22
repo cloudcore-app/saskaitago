@@ -1,8 +1,8 @@
-# SaskaitaGo
+# SaskaitaGO
 
 ## Lietuvių kalba
 
-**SaskaitaGo** – vietinė sąskaitų išrašymo programa, skirta Lietuvos individualią veiklą vykdantiems asmenims ir mažoms įmonėms. Ji veikia jūsų kompiuteryje, o įmonės, klientų ir sąskaitų duomenys saugomi vietiniame kataloge.
+**SaskaitaGO** – vietinė sąskaitų išrašymo programa, skirta Lietuvos individualią veiklą vykdantiems asmenims ir mažoms įmonėms. Ji veikia jūsų kompiuteryje, o įmonės, klientų ir sąskaitų duomenys saugomi vietiniame kataloge.
 
 ### Funkcijos
 
@@ -12,27 +12,30 @@
 - Metinė numeracija: pasirinkta serija sąskaitoms faktūroms, `IS` išankstinėms ir `KR` kreditinėms sąskaitoms.
 - Prekių bei paslaugų eilutės, kiekiai, kainos ir 21 %, 9 %, 5 % arba 0 % PVM tarifas.
 - Apmokėjimo būsena, terminas, filtravimas ir paieška.
-- A4 spausdinimo maketas, kurį galima išsaugoti PDF formatu naršyklėje.
+- Modernus A4 sąskaitos maketas su sistemos spausdinimo dialogu ir PDF išsaugojimu.
 
 ### Paleidimas
 
-Reikalingas Node.js 20 arba naujesnė versija. SaskaitaGo kataloge paleiskite:
+Reikalingas Node.js 22 arba naujesnė versija ir pnpm. SaskaitaGO kataloge įdiekite priklausomybes ir paleiskite darbalaukio programą:
 
 ```bash
-npm start
+pnpm install
+pnpm dev
 ```
 
-Atidarykite <http://127.0.0.1:4173>. Prievadą galima pakeisti: `PORT=5000 npm start`. Serveris pagal numatymą priima tik vietinius ryšius.
+Paleiskite `pnpm start`, jei reikia įprasto darbalaukio programos paleidimo. `pnpm serve` paleidžia tik vietinį serverį.
 
-Duomenys saugomi `data/workspace.json`. Saugojimo vietą galima pakeisti nustatant `SASKAITAGO_DATA_DIR`. Jei naudojate programą realiems dokumentams, reguliariai kurkite šio katalogo atsargines kopijas.
+Darbalaukio programa atidaro atskirą langą. Sąskaitos peržiūra atidaroma kitame programos lange, o spausdinimo mygtukas iškviečia sistemos spausdinimo dialogą.
+
+Darbalaukio programos duomenys saugomi atskirame programos duomenų kataloge jūsų naudotojo profilyje. Jei naudojate programą realiems dokumentams, reguliariai kurkite šio katalogo atsargines kopijas.
 
 ### Dabartinė būklė
 
-Tai veikiantis prototipas, kurio atitiktis konkrečios įmonės apskaitos ir mokesčių reikalavimams nėra patvirtinta. Prieš naudodami apskaitoje, patikrinkite rekvizitus ir taikomas taisykles su buhalteriu. Kol kas nėra diegimo programos ir automatinio paleidimo kartu su operacine sistema, sąskaitų siuntimo el. paštu, Peppol/UBL palaikymo, bankų ar apskaitos sistemų integracijų, automatinių atsarginių kopijų ir išrašytų dokumentų redagavimo. Duomenys saugomi viename JSON faile; vienu metu palaikomas vienas programos egzempliorius.
+Tai ankstyva darbalaukio programos versija, kurios atitiktis konkrečios įmonės apskaitos ir mokesčių reikalavimams nėra patvirtinta. Prieš naudodami apskaitoje, patikrinkite rekvizitus ir taikomas taisykles su buhalteriu. Automatinis paleidimas kartu su operacine sistema, sąskaitų siuntimas el. paštu, Peppol/UBL palaikymas, bankų ar apskaitos sistemų integracijos, automatinės atsarginės kopijos ir išrašytų dokumentų redagavimas dar nepalaikomi. Duomenys saugomi viename JSON faile; vienu metu palaikomas vienas programos egzempliorius.
 
 ## English
 
-**SaskaitaGo** is a local invoicing app for Lithuanian sole traders and small businesses. It runs on your computer and stores company, customer, and invoice data in a local directory.
+**SaskaitaGO** is a local invoicing app for Lithuanian sole traders and small businesses. It runs on your computer and stores company, customer, and invoice data in a local directory.
 
 ### Features
 
@@ -42,20 +45,23 @@ Tai veikiantis prototipas, kurio atitiktis konkrečios įmonės apskaitos ir mok
 - Annual numbering: a configurable series for sales invoices, `IS` for pro forma invoices, and `KR` for credit invoices.
 - Product and service lines, quantities, prices, and 21%, 9%, 5%, or 0% VAT rates.
 - Payment status, due dates, filters, and search.
-- An A4 print layout that can be saved as a PDF from the browser.
+- A modern A4 invoice layout with the system print dialog and PDF export.
 
 ### Run locally
 
-Node.js 20 or newer is required. From the SaskaitaGo directory, run:
+Node.js 22 or newer and pnpm are required. From the SaskaitaGO directory, install dependencies and launch the desktop app:
 
 ```bash
-npm start
+pnpm install
+pnpm dev
 ```
 
-Open <http://127.0.0.1:4173>. To use another port, run `PORT=5000 npm start`. By default, the server accepts local connections only.
+Use `pnpm start` for a regular desktop app launch. `pnpm serve` starts only the local server.
 
-Data is stored in `data/workspace.json`. Set `SASKAITAGO_DATA_DIR` to use a different directory. If you use the app for real business records, back up this directory regularly.
+The desktop app opens in its own window. Invoice previews open in a separate app window, and the print button opens the system print dialog.
+
+The desktop app stores data in its dedicated application data directory in your user profile. If you use the app for real business records, back up this directory regularly.
 
 ### Current status
 
-This is a working prototype and does not certify that generated documents meet every business's accounting and tax requirements. Confirm the required details and applicable rules with an accountant before using it for bookkeeping. There is no installer or automatic startup with the operating system yet, and no email delivery, Peppol/UBL support, bank or accounting integrations, automatic backups, or editing of issued documents. Data is stored in one JSON file; only one app instance is supported at a time.
+This is an early desktop release and does not certify that generated documents meet every business's accounting and tax requirements. Confirm the required details and applicable rules with an accountant before using it for bookkeeping. Automatic startup with the operating system is not implemented yet. There is no email delivery, Peppol/UBL support, bank or accounting integrations, automatic backups, or editing of issued documents. Data is stored in one JSON file; only one app instance is supported at a time.
