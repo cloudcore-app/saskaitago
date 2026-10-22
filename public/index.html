@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="lt">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f5f6f8">
+  <title>SaskaitaGo — vietinė sąskaitų programa</title>
+  <link rel="stylesheet" href="/styles.css">
+  <link rel="stylesheet" href="/responsive.css">
+  <script src="/app.js" defer></script>
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar">
+      <a class="brand" href="/" aria-label="SaskaitaGo pradžia"><span class="brand-mark">S</span><span>Saskaita<span class="brand-light">Go</span></span></a>
+      <div class="side-label">DARBO VIETA</div>
+      <button class="nav-item active" data-view="invoices"><span class="nav-icon">▤</span>Sąskaitos<span class="nav-count" id="navCount">0</span></button>
+      <button class="nav-item" data-view="clients"><span class="nav-icon">♧</span>Klientai</button>
+      <div class="side-bottom">
+        <div class="local-badge"><span></span><div><b>Veikia lokaliai</b><small>Duomenys lieka šiame kompiuteryje</small></div></div>
+        <button class="profile-button" id="settingsButton"><span class="avatar" id="avatar">SG</span><span class="profile-text"><b id="profileName">Jūsų įmonė</b><small>Įmonės nustatymai</small></span><span class="settings-gear">⚙</span></button>
+      </div>
+    </aside>
+    <main class="main">
+      <header class="topbar"><div class="breadcrumb">Darbo vieta <span>/</span> <b id="pageCrumb">Sąskaitos</b></div><div class="top-actions"><span class="local-indicator"><i></i> Tik šiame kompiuteryje</span><button class="icon-button" id="topSettings" aria-label="Nustatymai">⚙</button></div></header>
+      <section class="content" id="content"></section>
+    </main>
+  </div>
+  <div id="modalRoot"></div>
+  <div class="toast" id="toast" role="status"></div>
+</body>
+</html>
