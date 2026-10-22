@@ -10,6 +10,8 @@
   "main": "electron/main.mjs",
   "scripts": {
     "dev": "electron .",
+    "dev:site": "node scripts/serve-website.mjs",
+    "dev:all": "node scripts/dev-all.mjs",
     "start": "electron .",
     "serve": "node server.mjs",
     "dist:linux": "electron-builder --linux AppImage deb",
@@ -26,10 +28,10 @@
     "asar": true,
     "directories": { "output": "dist", "buildResources": "build" },
     "files": ["electron/**", "public/**", "server.mjs", "package.json", "README.md"],
-    "linux": { "category": "Office", "maintainer": "info@cloudcore.lt", "syncDesktopName": true, "target": ["AppImage", "deb"] },
-    "win": { "target": ["nsis"] },
+    "linux": { "icon": "build/icon.png", "category": "Office", "maintainer": "info@cloudcore.lt", "syncDesktopName": true, "target": ["AppImage", "deb"] },
+    "win": { "icon": "build/icon.ico", "target": ["nsis"] },
     "nsis": { "oneClick": false, "allowToChangeInstallationDirectory": true, "createDesktopShortcut": true },
-    "mac": { "target": ["dmg"], "category": "public.app-category.business" }
+    "mac": { "icon": "build/icon.icns", "target": ["dmg"], "category": "public.app-category.business" }
   },
   "engines": { "node": ">=22" }
 }

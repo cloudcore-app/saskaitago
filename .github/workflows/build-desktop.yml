@@ -3,7 +3,6 @@ name: Desktop builds
 on:
   push:
     branches: [main]
-    tags: ['v*']
   pull_request:
     branches: [main]
   workflow_dispatch:
@@ -74,23 +73,3 @@ jobs:
           path: ${{ matrix.artifacts }}
           if-no-files-found: error
           retention-days: 30
-
-  publish-release:
-    name: Publish GitHub release
-    if: startsWith(github.ref, 'refs/tags/v')
-    needs: build
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-    steps:
-      - name: Download all platform installers
-        uses: actions/download-artifact@v4
-        with:
-          pattern: SaskaitaGO-*
-          path: dist/
-          merge-multiple: true
-
-      - name: Publish versioned release
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: gh release create "$GITHUB_REF_NAME" dist/* --title "SaskaitaGO $GITHUB_REF_NAME" --generate-notes

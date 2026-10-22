@@ -26,9 +26,9 @@ The **Desktop builds** workflow builds installers for all three operating system
 
 Builds are unsigned. Windows or macOS may show a security prompt when opening them. Signed and notarized distribution requires platform certificates and credentials.
 
-The `website/` folder contains the bilingual product landing page. Its download buttons read assets from the latest GitHub Release. To build and publish a release, update the app version in `package.json`, create a matching `v` tag (for example `v0.3.0`), and push the tag. The workflow builds all platforms and attaches their installers to the release.
+The `website/` folder contains a static bilingual landing page for deployment on your own hosting. GitHub is used as a source-code backup; the site does not call GitHub or use GitHub Releases. Put the installers in `website/downloads/` using the filenames `SaskaitaGO-Setup.exe`, `SaskaitaGO.dmg`, `SaskaitaGO.AppImage`, and `SaskaitaGO.deb`, then upload the contents of `website/` to your hosting. The download links already point to those local paths. Build installers for each operating system using the commands below; macOS must be built on macOS.
 
-To preview the landing page locally, run `python3 -m http.server 8080 --directory website` and open <http://127.0.0.1:8080>.
+Run `pnpm run dev:all` to start the desktop app and landing page together. The landing page opens at <http://127.0.0.1:4174>. To run only the landing page, use `pnpm run dev:site`.
 
 ## Run from source
 
@@ -89,9 +89,9 @@ Dokumentuose galima taikyti 21 %, 9 %, 5 % arba 0 % PVM tarifą. Prieš naudodam
 
 Diegimo paketai nėra pasirašyti. Windows arba macOS gali parodyti saugos įspėjimą. Pasirašytam ir notarizuotam platinimui reikalingi platformų sertifikatai ir prisijungimo duomenys.
 
-`website/` aplanke yra dvikalbis programos nukreipimo puslapis. Atsisiuntimo mygtukai automatiškai susiejami su naujausio GitHub leidimo failais. Norėdami paruošti ir paskelbti leidimą, atnaujinkite programos versiją `package.json`, sukurkite atitinkamą `v` žymą (pavyzdžiui, `v0.3.0`) ir nusiųskite ją į GitHub. Darbo eiga sukurs paketus visoms platformoms ir pridės juos prie leidimo.
+`website/` aplanke yra statinis dvikalbis nukreipimo puslapis, skirtas įkelti į jūsų prieglobą. GitHub naudojamas tik išeities kodo atsarginei kopijai; svetainė nesikreipia į GitHub ir nenaudoja GitHub leidimų. Įdėkite diegimo paketus į `website/downloads/` šiais pavadinimais: `SaskaitaGO-Setup.exe`, `SaskaitaGO.dmg`, `SaskaitaGO.AppImage` ir `SaskaitaGO.deb`. Tuomet įkelkite `website/` turinį į savo prieglobą. Atsisiuntimo nuorodos jau nurodo šiuos vietinius kelius. Diegimo paketus kurkite toliau pateiktomis komandomis; macOS paketą reikia kurti macOS sistemoje.
 
-Norėdami peržiūrėti puslapį vietoje, paleiskite `python3 -m http.server 8080 --directory website` ir atidarykite <http://127.0.0.1:8080>.
+Paleiskite `pnpm run dev:all`, kad kartu atidarytumėte programą ir nukreipimo puslapį. Puslapis veiks adresu <http://127.0.0.1:4174>. Jei reikia tik puslapio, naudokite `pnpm run dev:site`.
 
 ### Paleidimas iš išeities kodo
 
