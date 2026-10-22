@@ -20,10 +20,15 @@ jobs:
         include:
           - os: ubuntu-latest
             platform: linux
+            artifacts: |
+              dist/*.AppImage
+              dist/*.deb
           - os: windows-latest
             platform: windows
+            artifacts: dist/*.exe
           - os: macos-latest
             platform: macos
+            artifacts: dist/*.dmg
 
     steps:
       - name: Check out source
@@ -65,6 +70,6 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: SaskaitaGO-${{ matrix.platform }}
-          path: dist/
+          path: ${{ matrix.artifacts }}
           if-no-files-found: error
           retention-days: 30
