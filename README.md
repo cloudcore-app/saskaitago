@@ -26,9 +26,7 @@ The **Desktop builds** workflow builds installers for all three operating system
 
 Builds are unsigned. Windows or macOS may show a security prompt when opening them. Signed and notarized distribution requires platform certificates and credentials.
 
-The `website/` folder contains a static bilingual landing page for deployment on your own hosting. GitHub is used as a source-code backup; the site does not call GitHub or use GitHub Releases. Put the installers in `website/downloads/` using the filenames `SaskaitaGO-Setup.exe`, `SaskaitaGO.dmg`, `SaskaitaGO.AppImage`, and `SaskaitaGO.deb`, then upload the contents of `website/` to your hosting. The download links already point to those local paths. Build installers for each operating system using the commands below; macOS must be built on macOS.
-
-Run `pnpm run dev:all` to start the desktop app and landing page together. The landing page opens at <http://127.0.0.1:4174>. To run only the landing page, use `pnpm run dev:site`.
+The installers are named `SaskaitaGO-Setup.exe`, `SaskaitaGO.dmg`, `SaskaitaGO.AppImage`, and `SaskaitaGO.deb`. The product landing page is maintained in a separate repository. Build installers for each operating system using the commands below; macOS must be built on macOS.
 
 ## Run from source
 
@@ -39,7 +37,7 @@ pnpm install
 pnpm dev
 ```
 
-`pnpm start` launches the desktop app. `pnpm serve` starts only the local web server and does not provide desktop features such as choosing a folder for automatic PDF saving.
+`pnpm start` launches the desktop app. `pnpm serve` starts only the local web server and does not provide desktop features such as choosing a folder for automatic PDF saving. `pnpm test` runs the server tests.
 
 ## Build locally
 
@@ -55,9 +53,11 @@ The build output is written to `dist/`. The macOS command creates a universal di
 
 ## Data and backups
 
-The desktop app keeps its data in the operating system's application data folder under the current user profile. Records stay in a local JSON workspace and are not automatically synced to a cloud service. In Program settings, export the workspace as JSON, an Excel-compatible `.xls` workbook, or a PDF report, then save the file wherever you choose.
+The desktop app keeps its data in the operating system's application data folder under the current user profile. Records stay in a local JSON workspace and are not automatically synced to a cloud service. In Program settings, export the workspace as JSON, an Excel-compatible `.xls` workbook, or a PDF report, then save the file wherever you choose. A JSON export can be restored with **Import JSON**; the current workspace is copied to `workspace.backup-<time>.json` in the data folder first.
 
-Only one app instance is supported at a time. Automatic backups, importing exported data into the app, email delivery, Peppol/UBL, bank and accounting integrations, and editing issued invoices are not implemented.
+Issued invoices keep a copy of the seller details at the time of issue, so later settings changes do not alter them. Invoice numbers within a series follow issue dates, and credit notes and applied advances cannot exceed the related invoice.
+
+Only one app instance runs at a time; launching it again focuses the open window. Automatic backups, email delivery, Peppol/UBL, bank and accounting integrations, and editing issued invoices are not implemented.
 
 ---
 
@@ -89,9 +89,7 @@ Dokumentuose galima taikyti 21 %, 9 %, 5 % arba 0 % PVM tarifą. Prieš naudodam
 
 Diegimo paketai nėra pasirašyti. Windows arba macOS gali parodyti saugos įspėjimą. Pasirašytam ir notarizuotam platinimui reikalingi platformų sertifikatai ir prisijungimo duomenys.
 
-`website/` aplanke yra statinis dvikalbis nukreipimo puslapis, skirtas įkelti į jūsų prieglobą. GitHub naudojamas tik išeities kodo atsarginei kopijai; svetainė nesikreipia į GitHub ir nenaudoja GitHub leidimų. Įdėkite diegimo paketus į `website/downloads/` šiais pavadinimais: `SaskaitaGO-Setup.exe`, `SaskaitaGO.dmg`, `SaskaitaGO.AppImage` ir `SaskaitaGO.deb`. Tuomet įkelkite `website/` turinį į savo prieglobą. Atsisiuntimo nuorodos jau nurodo šiuos vietinius kelius. Diegimo paketus kurkite toliau pateiktomis komandomis; macOS paketą reikia kurti macOS sistemoje.
-
-Paleiskite `pnpm run dev:all`, kad kartu atidarytumėte programą ir nukreipimo puslapį. Puslapis veiks adresu <http://127.0.0.1:4174>. Jei reikia tik puslapio, naudokite `pnpm run dev:site`.
+Diegimo paketų pavadinimai: `SaskaitaGO-Setup.exe`, `SaskaitaGO.dmg`, `SaskaitaGO.AppImage` ir `SaskaitaGO.deb`. Produkto nukreipimo puslapis laikomas atskirame repozitorijoje. Diegimo paketus kurkite toliau pateiktomis komandomis; macOS paketą reikia kurti macOS sistemoje.
 
 ### Paleidimas iš išeities kodo
 
@@ -102,7 +100,7 @@ pnpm install
 pnpm dev
 ```
 
-`pnpm start` paleidžia darbalaukio programą. `pnpm serve` paleidžia tik vietinį žiniatinklio serverį; jame neveikia darbalaukio funkcijos, pavyzdžiui, aplanko pasirinkimas automatiniam PDF saugojimui.
+`pnpm start` paleidžia darbalaukio programą. `pnpm serve` paleidžia tik vietinį žiniatinklio serverį; jame neveikia darbalaukio funkcijos, pavyzdžiui, aplanko pasirinkimas automatiniam PDF saugojimui. `pnpm test` paleidžia serverio testus.
 
 ### Vietinis paketo kūrimas
 
@@ -118,6 +116,8 @@ Sukūrimo failai pateikiami `dist/` aplanke. macOS komanda sukuria universalų d
 
 ### Duomenys ir atsarginės kopijos
 
-Darbalaukio programa duomenis saugo operacinės sistemos programų duomenų aplanke, dabartinio naudotojo profilyje. Įrašai laikomi vietiniame JSON faile ir automatiškai nesinchronizuojami su debesijos paslauga. Programos nustatymų skiltyje „Programa“ darbo vietą galite eksportuoti JSON, su „Excel“ suderinamu `.xls` arba PDF ataskaitos formatu ir išsaugoti pasirinktame aplanke.
+Darbalaukio programa duomenis saugo operacinės sistemos programų duomenų aplanke, dabartinio naudotojo profilyje. Įrašai laikomi vietiniame JSON faile ir automatiškai nesinchronizuojami su debesijos paslauga. Programos nustatymų skiltyje „Programa“ darbo vietą galite eksportuoti JSON, su „Excel“ suderinamu `.xls` arba PDF ataskaitos formatu ir išsaugoti pasirinktame aplanke. JSON kopiją galima atkurti mygtuku **Importuoti JSON**; prieš tai dabartiniai duomenys nukopijuojami į `workspace.backup-<laikas>.json` duomenų aplanke.
 
-Vienu metu palaikomas vienas programos egzempliorius. Automatinės atsarginės kopijos, eksportuotų duomenų importavimas programoje, el. pašto siuntimas, Peppol/UBL, bankų bei apskaitos sistemų integracijos ir išrašytų sąskaitų redagavimas dar nepalaikomi.
+Išrašytose sąskaitose išsaugoma pardavėjo duomenų kopija, todėl vėlesni nustatymų pakeitimai jų nekeičia. Serijos numeriai eina pagal išrašymo datas, o kreditinės sąskaitos ir įskaitytas avansas negali viršyti susijusios sąskaitos sumos.
+
+Vienu metu veikia vienas programos egzempliorius; paleidus dar kartą, suaktyvinamas jau atidarytas langas. Automatinės atsarginės kopijos, el. pašto siuntimas, Peppol/UBL, bankų bei apskaitos sistemų integracijos ir išrašytų sąskaitų redagavimas dar nepalaikomi.

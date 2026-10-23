@@ -12,7 +12,19 @@ let dataDirectory;
 
 // Some Linux systems cannot access the installed Mesa/GPU drivers.
 // Software rendering keeps the desktop window available in that environment.
-app.disableHardwareAcceleration();
+if (process.platform === "linux") app.disableHardwareAcceleration();
+
+// A second instance would start its own server and race the first one on workspace.json.
+const hasInstanceLock = app.requestSingleInstanceLock();
+if (!hasInstanceLock) app.quit();
+app.on("second-instance", () => {
+  if (!mainWindow) return;
+  if (mainWindow.isMinimized()) mainWindow.restore();
+  mainWindow.focus();
+});
+
+// A stable port keeps the page origin (and its localStorage) the same between launches.
+const PREFERRED_PORT = 41730;
 
 function isInternalUrl(value) {
   try { return new URL(value).origin === appOrigin; } catch { return false; }
@@ -123,8 +135,9 @@ ipcMain.handle("workspace:save-pdf", async (event) => {
 });
 
 app.whenReady().then(async () => {
+  if (!hasInstanceLock) return;
   dataDirectory = path.join(app.getPath("userData"), "data");
-  localServer = await startServer({ host: "127.0.0.1", port: 0, dataDirectory });
+  localServer = await startServer({ host: "127.0.0.1", port: PREFERRED_PORT, fallbackPort: 0, dataDirectory });
   appOrigin = `http://127.0.0.1:${localServer.port}`;
   createMainWindow();
   app.on("activate", () => { if (BrowserWindow.getAllWindows().length === 0) createMainWindow(); });

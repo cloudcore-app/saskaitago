@@ -10,13 +10,13 @@
   "main": "electron/main.mjs",
   "scripts": {
     "dev": "electron .",
-    "dev:site": "node scripts/serve-website.mjs",
-    "dev:all": "node scripts/dev-all.mjs",
     "start": "electron .",
     "serve": "node server.mjs",
     "dist:linux": "electron-builder --linux AppImage deb",
     "dist:windows": "electron-builder --win nsis",
-    "dist:mac": "electron-builder --mac dmg --universal"
+    "dist:mac": "electron-builder --mac dmg --universal",
+    "test": "node --test",
+    "check": "node --check server.mjs && node --check electron/main.mjs && node --check public/app.js && node --check public/i18n.js && node --check public/invoice.js"
   },
   "devDependencies": {
     "electron": "^45.0.0",
@@ -26,12 +26,58 @@
     "appId": "lt.saskaitago.desktop",
     "productName": "SaskaitaGO",
     "asar": true,
-    "directories": { "output": "dist", "buildResources": "build" },
-    "files": ["electron/**", "public/**", "server.mjs", "package.json", "README.md"],
-    "linux": { "icon": "build/icon.png", "category": "Office", "maintainer": "info@cloudcore.lt", "syncDesktopName": true, "target": ["AppImage", "deb"] },
-    "win": { "icon": "build/icon.ico", "target": ["nsis"] },
-    "nsis": { "oneClick": false, "allowToChangeInstallationDirectory": true, "createDesktopShortcut": true },
-    "mac": { "icon": "build/icon.icns", "target": ["dmg"], "category": "public.app-category.business" }
+    "directories": {
+      "output": "dist",
+      "buildResources": "build"
+    },
+    "files": [
+      "electron/**",
+      "public/**",
+      "server.mjs",
+      "package.json",
+      "README.md"
+    ],
+    "linux": {
+      "icon": "build/icon.png",
+      "category": "Office",
+      "maintainer": "info@cloudcore.lt",
+      "syncDesktopName": true,
+      "target": [
+        "AppImage",
+        "deb"
+      ]
+    },
+    "win": {
+      "icon": "build/icon.ico",
+      "target": [
+        "nsis"
+      ]
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "artifactName": "SaskaitaGO-Setup.exe"
+    },
+    "mac": {
+      "icon": "build/icon.icns",
+      "target": [
+        "dmg"
+      ],
+      "category": "public.app-category.business"
+    },
+    "appImage": {
+      "artifactName": "SaskaitaGO.AppImage"
+    },
+    "deb": {
+      "artifactName": "SaskaitaGO.deb"
+    },
+    "dmg": {
+      "artifactName": "SaskaitaGO.dmg"
+    }
   },
-  "engines": { "node": ">=22" }
+  "engines": {
+    "node": ">=22"
+  },
+  "repository": "github:cloudcore-app/saskaitago"
 }
