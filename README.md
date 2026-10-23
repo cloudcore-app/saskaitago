@@ -16,7 +16,7 @@ Invoice templates support 21%, 9%, 5%, and 0% VAT rates. Verify tax treatment an
 
 ## Installers
 
-The **Desktop builds** workflow builds installers for all three operating systems on their respective GitHub Actions runners. It runs on pushes and pull requests to `main`, or can be started from the Actions tab with **Run workflow**. Open a successful run and download its platform artifact.
+Linux and Windows installers are built locally (Windows inside a Docker image with Wine). Only the macOS disk image needs macOS, so the **Desktop builds** workflow builds it when started from the Actions tab with **Run workflow** or when a `v*` tag is pushed; on every push it only runs the tests.
 
 | Operating system | Installer files |
 | --- | --- |
@@ -41,15 +41,16 @@ pnpm dev
 
 ## Build locally
 
-Run the matching command on the target operating system:
+A release on Linux (Docker is required for the Windows build):
 
 ```bash
-pnpm run dist:windows
-pnpm run dist:mac
-pnpm run dist:linux
+pnpm run dist:local          # dist/SaskaitaGO.AppImage, SaskaitaGO.deb, SaskaitaGO-Setup.exe
+git tag v0.3.0 && git push origin v0.3.0   # starts the macOS build in CI
+pnpm run fetch:mac           # dist/SaskaitaGO.dmg from the CI run of the current commit
+pnpm run publish:downloads   # uploads all four installers to the landing page server
 ```
 
-The build output is written to `dist/`. The macOS command creates a universal disk image. A macOS build must run on macOS; the included GitHub Actions workflow uses a separate runner for each platform.
+`publish:downloads` refuses to upload an incomplete set; `ALLOW_PARTIAL=1` overrides that. `fetch:mac` uses `GH_TOKEN` or the GitHub credential stored for git. On a Mac, `pnpm run dist:mac` builds the universal disk image directly, and on Windows `pnpm run dist:windows` builds the installer without Docker.
 
 ## Data and backups
 
@@ -79,7 +80,7 @@ Dokumentuose galima taikyti 21 %, 9 %, 5 % arba 0 % PVM tarifą. Prieš naudodam
 
 ### Diegimo paketai
 
-**Desktop builds** GitHub Actions darbo eiga kiekvienai operacinei sistemai sukuria diegimo paketą atskirame GitHub runner'yje. Ji vykdoma pakeitus `main` šaką, sukūrus PR į `main` arba rankiniu būdu paleidus darbo eigą GitHub Actions skiltyje. Sėkmingo vykdymo puslapyje atsisiųskite savo sistemai skirtą artefaktą.
+Linux ir Windows diegimo paketai kuriami vietoje (Windows – Docker atvaizde su Wine). Tik macOS paketui reikia macOS, todėl **Desktop builds** darbo eiga jį kuria paleidus rankiniu būdu (**Run workflow**) arba įkėlus `v*` žymą; po kiekvieno pakeitimo ji tik paleidžia testus.
 
 | Operacinė sistema | Diegimo failai |
 | --- | --- |
@@ -104,15 +105,16 @@ pnpm dev
 
 ### Vietinis paketo kūrimas
 
-Vykdykite atitinkamą komandą tikslinėje operacinėje sistemoje:
+Leidimas Linux sistemoje (Windows paketui reikia Docker):
 
 ```bash
-pnpm run dist:windows
-pnpm run dist:mac
-pnpm run dist:linux
+pnpm run dist:local          # dist/SaskaitaGO.AppImage, SaskaitaGO.deb, SaskaitaGO-Setup.exe
+git tag v0.3.0 && git push origin v0.3.0   # paleidžia macOS paketo kūrimą CI
+pnpm run fetch:mac           # dist/SaskaitaGO.dmg iš dabartinio komito CI vykdymo
+pnpm run publish:downloads   # įkelia visus keturis paketus į nukreipimo puslapio serverį
 ```
 
-Sukūrimo failai pateikiami `dist/` aplanke. macOS komanda sukuria universalų diegimo atvaizdą. macOS paketą reikia kurti macOS sistemoje; GitHub Actions darbo eiga naudoja atskirą runner'į kiekvienai platformai.
+`publish:downloads` neįkelia nepilno rinkinio; tai galima apeiti su `ALLOW_PARTIAL=1`. `fetch:mac` naudoja `GH_TOKEN` arba git išsaugotą GitHub prisijungimą. Mac kompiuteryje `pnpm run dist:mac` sukuria universalų atvaizdą tiesiogiai, o Windows sistemoje `pnpm run dist:windows` sukuria diegimo programą be Docker.
 
 ### Duomenys ir atsarginės kopijos
 

@@ -1,8 +1,11 @@
 name: Desktop builds
 
+# Linux and Windows installers are built locally (pnpm run dist:local).
+# Only macOS needs a macOS runner, and it is billed at 10x, so it runs on demand or for a v* tag.
 on:
   push:
     branches: [main]
+    tags: ["v*"]
   pull_request:
     branches: [main]
   workflow_dispatch:
@@ -29,26 +32,11 @@ jobs:
       - name: Run tests
         run: npm test
 
-  build:
-    name: Build ${{ matrix.platform }}
+  build-macos:
+    name: Build macOS
     needs: test
-    runs-on: ${{ matrix.os }}
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - os: ubuntu-latest
-            platform: linux
-            artifacts: |
-              dist/*.AppImage
-              dist/*.deb
-          - os: windows-latest
-            platform: windows
-            artifacts: dist/*.exe
-          - os: macos-latest
-            platform: macos
-            artifacts: dist/*.dmg
-
+    if: github.event_name == 'workflow_dispatch' || startsWith(github.ref, 'refs/tags/v')
+    runs-on: macos-latest
     steps:
       - name: Check out source
         uses: actions/checkout@v4
@@ -64,31 +52,16 @@ jobs:
           node-version: 22
           cache: pnpm
 
-      - name: Install Linux packaging tools
-        if: matrix.platform == 'linux'
-        run: |
-          sudo apt-get update
-          sudo apt-get install --yes libopenjp2-tools
-
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Build Linux installers
-        if: matrix.platform == 'linux'
-        run: pnpm run dist:linux
-
-      - name: Build Windows installer
-        if: matrix.platform == 'windows'
-        run: pnpm run dist:windows
-
       - name: Build universal macOS disk image
-        if: matrix.platform == 'macos'
         run: pnpm run dist:mac
 
-      - name: Upload installer artifacts
+      - name: Upload installer artifact
         uses: actions/upload-artifact@v4
         with:
-          name: SaskaitaGO-${{ matrix.platform }}
-          path: ${{ matrix.artifacts }}
+          name: SaskaitaGO-macos
+          path: dist/SaskaitaGO.dmg
           if-no-files-found: error
           retention-days: 30
