@@ -16,11 +16,14 @@
     "dist:windows": "electron-builder --win nsis",
     "dist:mac": "electron-builder --mac dmg --universal",
     "test": "node --test",
-    "check": "node --check server.mjs && node --check electron/main.mjs && node --check public/app.js && node --check public/i18n.js && node --check public/invoice.js"
+    "check": "node --check server.mjs && node --check electron/main.mjs && node --check public/app.js && node --check public/i18n.js && node --check public/invoice.js",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
   },
   "devDependencies": {
     "electron": "^45.0.0",
-    "electron-builder": "^26.0.0"
+    "electron-builder": "^26.0.0",
+    "prettier": "3.3.3"
   },
   "build": {
     "appId": "lt.saskaitago.desktop",

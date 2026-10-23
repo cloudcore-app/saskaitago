@@ -1,0 +1,7 @@
+dist/
+data/
+node_modules/
+pnpm-lock.yaml
+build/
+*.md
+.github/

@@ -30,8 +30,21 @@ async function api(pathname, { method = "GET", body, headers = {} } = {}) {
   return { status: response.status, body: await response.json().catch(() => ({})) };
 }
 
-const company = { businessType: "mb", company: "TEST MB", companyCode: "123456789", representativeName: "Jonas Jonaitis", address: "Vilnius", onboardingCompleted: true };
-const invoice = (overrides = {}) => ({ type: "vat", issueDate: "2026-03-10", client: { name: "PIRKĖJAS UAB" }, items: [{ description: "Paslauga", quantity: 2, unitPrice: 50, vatRate: 0 }], ...overrides });
+const company = {
+  businessType: "mb",
+  company: "TEST MB",
+  companyCode: "123456789",
+  representativeName: "Jonas Jonaitis",
+  address: "Vilnius",
+  onboardingCompleted: true,
+};
+const invoice = (overrides = {}) => ({
+  type: "vat",
+  issueDate: "2026-03-10",
+  client: { name: "PIRKĖJAS UAB" },
+  items: [{ description: "Paslauga", quantity: 2, unitPrice: 50, vatRate: 0 }],
+  ...overrides,
+});
 
 test("new workspace has no preset bank details", async () => {
   const { body } = await api("/api/workspace");
@@ -39,7 +52,11 @@ test("new workspace has no preset bank details", async () => {
 });
 
 test("writes without a JSON content type are rejected", async () => {
-  const response = await fetch(`${base}/api/clients`, { method: "POST", headers: { "content-type": "text/plain" }, body: JSON.stringify({ name: "CSRF" }) });
+  const response = await fetch(`${base}/api/clients`, {
+    method: "POST",
+    headers: { "content-type": "text/plain" },
+    body: JSON.stringify({ name: "CSRF" }),
+  });
   assert.equal(response.status, 415);
 });
 
@@ -75,21 +92,39 @@ test("invoice numbers cannot be back-dated within a series", async () => {
 
 test("credit notes cannot exceed the credited invoice", async () => {
   const original = (await api("/api/invoices", { method: "POST", body: invoice({ issueDate: "2026-04-01" }) })).body.invoice;
-  const credit = (amount) => api("/api/invoices", { method: "POST", body: invoice({ type: "credit", issueDate: "2026-04-02", relatedInvoiceId: original.id, items: [{ description: "Grąžinimas", quantity: 1, unitPrice: amount, vatRate: 0 }] }) });
+  const credit = (amount) =>
+    api("/api/invoices", {
+      method: "POST",
+      body: invoice({
+        type: "credit",
+        issueDate: "2026-04-02",
+        relatedInvoiceId: original.id,
+        items: [{ description: "Grąžinimas", quantity: 1, unitPrice: amount, vatRate: 0 }],
+      }),
+    });
   assert.equal((await credit(60)).status, 201);
   assert.equal((await credit(41)).status, 400);
   assert.equal((await credit(40)).status, 201);
 });
 
 test("applied advance cannot exceed the pro forma invoice", async () => {
-  const proforma = (await api("/api/invoices", { method: "POST", body: invoice({ type: "proforma", issueDate: "2026-05-01" }) })).body.invoice;
-  const settle = (advanceApplied) => api("/api/invoices", { method: "POST", body: invoice({ issueDate: "2026-05-02", relatedInvoiceId: proforma.id, advanceApplied }) });
+  const proforma = (await api("/api/invoices", { method: "POST", body: invoice({ type: "proforma", issueDate: "2026-05-01" }) })).body
+    .invoice;
+  const settle = (advanceApplied) =>
+    api("/api/invoices", { method: "POST", body: invoice({ issueDate: "2026-05-02", relatedInvoiceId: proforma.id, advanceApplied }) });
   assert.equal((await settle(70)).status, 201);
   assert.equal((await settle(31)).status, 400);
 });
 
 test("item values are escaped on the printed invoice", async () => {
-  const created = await api("/api/invoices", { method: "POST", body: invoice({ issueDate: "2026-06-01", client: { name: "<script>x</script>" }, items: [{ description: "<img src=x>", quantity: 1, unitPrice: 1, vatRate: 0 }] }) });
+  const created = await api("/api/invoices", {
+    method: "POST",
+    body: invoice({
+      issueDate: "2026-06-01",
+      client: { name: "<script>x</script>" },
+      items: [{ description: "<img src=x>", quantity: 1, unitPrice: 1, vatRate: 0 }],
+    }),
+  });
   const html = await (await fetch(`${base}/invoice/${created.body.invoice.id}`)).text();
   assert.doesNotMatch(html, /<script>x<\/script>|<img src=x>/);
 });
@@ -108,6 +143,9 @@ test("JSON export can be imported back and the old workspace is backed up", asyn
 });
 
 test("import rejects malformed invoices", async () => {
-  const { status } = await api("/api/import", { method: "POST", body: { settings: {}, clients: [], invoices: [{ id: "../x", number: "1" }] } });
+  const { status } = await api("/api/import", {
+    method: "POST",
+    body: { settings: {}, clients: [], invoices: [{ id: "../x", number: "1" }] },
+  });
   assert.equal(status, 400);
 });
