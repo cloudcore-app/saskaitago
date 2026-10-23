@@ -161,6 +161,7 @@
     ],
     ["Įmonės duomenys", "Company details"],
     ["Įmonės pavadinimas *", "Company name *"],
+    ["Įmonės pavadinimas", "Company name"],
     ["PVM mokėtojo kodas", "VAT number"],
     ["Mokėjimo rekvizitai", "Payment details"],
     ["IBAN", "IBAN"],
@@ -318,23 +319,63 @@
     ["IBAN nenurodytas", "IBAN not provided"],
     ["Įm. kodas", "Company code"],
     ["Veiklos pažymos Nr.", "Activity certificate no."],
+    ["PRADĖKIME", "GET STARTED"],
+    [
+      "Pasirinkimas nustato dokumento pavadinimą ir numatytą PVM tarifą. Jį galėsite keisti nustatymuose.",
+      "Your choice sets the document title and the default VAT rate. You can change it later in settings.",
+    ],
+    ["Ištrinti", "Delete"],
+    ["klientų", "clients"],
+    ["dokumentų", "documents"],
+    ["Kliento duomenys bus išsaugoti šiame kompiuteryje.", "Client details will be saved on this computer."],
+    ["Pavadinimas, kodas, el. paštas…", "Name, code or email…"],
+    ["Išrašyta sąskaita", "Invoice issued"],
+    ["KONFIGŪRACIJA", "CONFIGURATION"],
+    ["Pritaikykite programą savo darbo aplinkai.", "Adjust the app to the way you work."],
+    ["Įmonė", "Company"],
+    ["Programos išvaizda", "Appearance"],
+    ["Pasirinkite patogią kalbą ir spalvų temą.", "Choose your language and colour theme."],
+    ["Sąsajos kalba", "Interface language"],
+    ["Spalvų tema", "Colour theme"],
+    [
+      "Atsisiųskite įmonės nustatymus, klientus ir sąskaitas į JSON, Excel arba PDF failą.",
+      "Download company settings, clients and invoices as a JSON, Excel or PDF file.",
+    ],
+    ["Duomenų saugojimas", "Data storage"],
+    [
+      "Darbo vieta veikia šiame kompiuteryje. Įmonės, klientų ir sąskaitų duomenys saugomi vietinėje programos darbo vietoje.",
+      "The workspace runs on this computer. Company, client and invoice data is kept in the app's local workspace.",
+    ],
+    ["Pakeitimai įsigalios išsaugojus.", "Changes take effect once saved."],
+    ["Išsaugoti pakeitimus", "Save changes"],
+    ["Rekvizitai ir dokumentai", "Details and documents"],
+    ["Programa", "App"],
+    ["Kalba, tema ir duomenys", "Language, theme and data"],
+    ["Naudojimo vadovas", "User guide"],
+    ["Darbo su programa instrukcija", "How to use the app"],
+    ["Dokumento tipas", "Document type"],
+    ["Visi tipai", "All types"],
+    ["Išankstinės", "Pro forma"],
+    ["PVM sąskaitos", "VAT invoices"],
+    ["Kreditinės", "Credit notes"],
+    ["Numeris arba klientas…", "Number or client…"],
   ];
-  const ltToEn = new Map(pairs);
-  const enToLt = new Map(pairs.map(([lt, en]) => [en, lt]));
+  // One pass, longest phrase first: a phrase is replaced only where it is not part of a longer word
+  // ("Logo" must not turn "Logotipas" into "Logotipastipas"), and replaced text is never translated again
+  // ("Duomenų" → "Data" must not go on to "Date").
+  const converter = (entries) => {
+    const map = new Map(entries);
+    const alternatives = [...map.keys()].sort((a, b) => b.length - a.length).map((key) => key.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"));
+    const pattern = new RegExp(`(?<!\\p{L})(?:${alternatives.join("|")})(?!\\p{L})`, "gu");
+    return (value) => String(value).replace(pattern, (match) => map.get(match));
+  };
+  const toEn = converter(pairs.map(([lt, en]) => [lt, en]));
+  const toLt = converter(pairs.map(([lt, en]) => [en, lt]));
   function translate(value, language) {
-    if (language === "lt") return value;
-    let result = String(value);
-    for (const [from, to] of [...ltToEn].sort((a, b) => b[0].length - a[0].length)) result = result.split(from).join(to);
-    return result;
+    return language === "lt" ? value : toEn(value);
   }
   function apply(root, language) {
-    const replacements = language === "en" ? ltToEn : enToLt;
-    const pairsSorted = [...replacements].sort((a, b) => b[0].length - a[0].length);
-    const convert = (value) => {
-      let result = value;
-      for (const [from, to] of pairsSorted) result = result.split(from).join(to);
-      return result;
-    };
+    const convert = language === "en" ? toEn : toLt;
     const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
     const nodes = [];
     while (walker.nextNode()) nodes.push(walker.currentNode);

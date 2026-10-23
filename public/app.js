@@ -34,7 +34,11 @@ function savePreferences() {
 applyPreferences();
 new MutationObserver((records) => {
   const added = new Set();
-  for (const record of records) for (const node of record.addedNodes) if (node.nodeType === Node.ELEMENT_NODE) added.add(node);
+  // Text set with textContent arrives as a bare text node, so translate its element.
+  for (const record of records)
+    for (const node of record.addedNodes)
+      if (node.nodeType === Node.ELEMENT_NODE) added.add(node);
+      else if (node.nodeType === Node.TEXT_NODE && node.parentElement) added.add(node.parentElement);
   for (const node of added) window.saskaitaI18n?.apply(node, preferences.language);
 }).observe(document.body, { childList: true, subtree: true });
 const esc = (value = "") =>
