@@ -3,6 +3,7 @@ import { access, readFile, stat, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { startServer } from "../server.mjs";
+import { startUpdater } from "./updater.mjs";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 let mainWindow;
@@ -210,6 +211,13 @@ app.whenReady().then(async () => {
   localServer = await startServer({ host: "127.0.0.1", port: PREFERRED_PORT, fallbackPort: 0, dataDirectory });
   appOrigin = `http://127.0.0.1:${localServer.port}`;
   createMainWindow();
+  startUpdater({
+    getWindow: () => mainWindow,
+    // The interface language lives in the page's localStorage (see public/app.js).
+    getLanguage: async () =>
+      mainWindow?.webContents.executeJavaScript(`JSON.parse(localStorage.getItem("saskaitago.preferences") || "{}").language || "lt"`) ??
+      "lt",
+  });
   app.on("activate", () => {
     if (BrowserWindow.getAllWindows().length === 0) createMainWindow();
   });

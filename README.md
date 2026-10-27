@@ -24,6 +24,23 @@ Linux and Windows installers are built locally (Windows inside a Docker image wi
 | macOS | Universal `.dmg` for Intel and Apple Silicon |
 | Linux | `.AppImage` and `.deb` |
 
+Install from the command line (downloads from saskaitago.lt and checks the file against `SHA256SUMS`):
+
+```bash
+curl -fsSL https://saskaitago.lt/downloads/install.sh | bash          # Linux (AppImage in ~/.local) or macOS
+curl -fsSL https://saskaitago.lt/downloads/install.sh | bash -s -- --deb  # Debian/Ubuntu .deb via apt
+```
+
+```powershell
+irm https://saskaitago.lt/downloads/install.ps1 | iex   # Windows, per-user install
+```
+
+## Updates
+
+The app checks `https://saskaitago.lt/downloads/` 10 seconds after start and every 6 hours. The Windows installer and the AppImage download the update in the background and offer to restart; otherwise it is installed when the app quits. The unsigned macOS app and the `.deb` cannot replace themselves, so they show a notice with a link to the website. `SASKAITAGO_UPDATE_URL` points a packaged build at another feed for testing.
+
+The feeds are `latest.yml` (Windows; its version is also used by the macOS and `.deb` notice) and `latest-linux.yml`, which electron-builder writes to `dist/` next to the installers. `publish:downloads` uploads them after the installers, along with the install scripts and `SHA256SUMS`. A release therefore needs a new `version` in `package.json`.
+
 Builds are unsigned. Windows or macOS may show a security prompt when opening them. Signed and notarized distribution requires platform certificates and credentials.
 
 The installers are named `SaskaitaGO-Setup.exe`, `SaskaitaGO.dmg`, `SaskaitaGO.AppImage`, and `SaskaitaGO.deb`. The product landing page is maintained in a separate repository. Build installers for each operating system using the commands below; macOS must be built on macOS.

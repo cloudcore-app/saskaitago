@@ -20,7 +20,7 @@
     "fetch:mac": "bash scripts/fetch-mac-build.sh",
     "publish:downloads": "bash scripts/publish-downloads.sh",
     "test": "node --test",
-    "check": "node --check server.mjs && node --check electron/main.mjs && node --check public/app.js && node --check public/i18n.js && node --check public/invoice.js",
+    "check": "node --check server.mjs && node --check electron/main.mjs && node --check electron/updater.mjs && node --check public/app.js && node --check public/i18n.js && node --check public/invoice.js",
     "format": "prettier --write .",
     "format:check": "prettier --check ."
   },
@@ -81,10 +81,19 @@
     },
     "dmg": {
       "artifactName": "SaskaitaGO.dmg"
-    }
+    },
+    "publish": [
+      {
+        "provider": "generic",
+        "url": "https://saskaitago.lt/downloads/"
+      }
+    ]
   },
   "engines": {
     "node": ">=22"
   },
-  "repository": "github:cloudcore-app/saskaitago"
+  "repository": "github:cloudcore-app/saskaitago",
+  "dependencies": {
+    "electron-updater": "6.8.9"
+  }
 }
