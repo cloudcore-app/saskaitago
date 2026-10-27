@@ -2,6 +2,8 @@
 
 SaskaitaGO is a desktop invoicing program for Lithuanian sole traders and small businesses. It runs locally and stores company details, clients, invoices, and settings on the current computer.
 
+Website and downloads: [saskaitago.lt](https://saskaitago.lt). The full source of the app is in this repository.
+
 ## Features
 
 - Create sales, pro forma, and credit invoices with annual numbering.
@@ -76,6 +78,26 @@ The desktop app keeps its data in the operating system's application data folder
 Issued invoices keep a copy of the seller details at the time of issue, so later settings changes do not alter them. Invoice numbers within a series follow issue dates, and credit notes and applied advances cannot exceed the related invoice.
 
 Only one app instance runs at a time; launching it again focuses the open window. Automatic backups, email delivery, Peppol/UBL, bank and accounting integrations, and editing issued invoices are not implemented.
+
+## Network access
+
+The app's server listens only on `127.0.0.1` and rejects requests from other hosts and other websites. The only outgoing connection is the update check to `https://saskaitago.lt/downloads/` (`latest.yml` or `latest-linux.yml`, and the installer when an update is downloaded). Invoices, clients, and settings are never sent anywhere. See `server.mjs` and `electron/updater.mjs`.
+
+## Verifying downloads
+
+Every installer on saskaitago.lt is listed with its SHA-256 hash in [`SHA256SUMS`](https://saskaitago.lt/downloads/SHA256SUMS), and the same files and hashes are attached to each [GitHub release](https://github.com/cloudcore-app/saskaitago/releases). The install scripts check the hash before installing. To check a file by hand:
+
+```bash
+sha256sum SaskaitaGO.AppImage               # Linux
+shasum -a 256 SaskaitaGO.dmg                # macOS
+Get-FileHash SaskaitaGO-Setup.exe           # Windows PowerShell
+```
+
+The macOS disk image is built by the **Desktop builds** workflow on GitHub Actions from the tagged commit; the Linux and Windows installers are built locally with `pnpm run dist:local`.
+
+## License
+
+[MIT](LICENSE). Security reports: see [SECURITY.md](SECURITY.md).
 
 ---
 
