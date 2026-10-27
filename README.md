@@ -66,10 +66,10 @@ A release on Linux (Docker is required for the Windows build):
 pnpm run dist:local          # dist/SaskaitaGO.AppImage, SaskaitaGO.deb, SaskaitaGO-Setup.exe
 git tag v0.3.0 && git push origin v0.3.0   # starts the macOS build in CI
 pnpm run fetch:mac           # dist/SaskaitaGO.dmg from the CI run of the current commit
-pnpm run publish:downloads   # uploads all four installers to the landing page server
+pnpm run publish:downloads   # uploads all four installers to the landing page server and the GitHub release
 ```
 
-`publish:downloads` refuses to upload an incomplete set; `ALLOW_PARTIAL=1` overrides that. `fetch:mac` uses `GH_TOKEN` or the GitHub credential stored for git. On a Mac, `pnpm run dist:mac` builds the universal disk image directly, and on Windows `pnpm run dist:windows` builds the installer without Docker.
+`publish:downloads` refuses to upload an incomplete set; `ALLOW_PARTIAL=1` overrides that and skips the GitHub release. With the full set it creates the release for the `v<version>` tag (which must already be pushed), with notes from the commits since the previous tag, or replaces the files of an existing one; `SKIP_GITHUB_RELEASE=1` leaves the release out. `fetch:mac` and `publish:downloads` use `GH_TOKEN` or the GitHub credential stored for git. On a Mac, `pnpm run dist:mac` builds the universal disk image directly, and on Windows `pnpm run dist:windows` builds the installer without Docker.
 
 ## Data and backups
 
@@ -150,10 +150,10 @@ Leidimas Linux sistemoje (Windows paketui reikia Docker):
 pnpm run dist:local          # dist/SaskaitaGO.AppImage, SaskaitaGO.deb, SaskaitaGO-Setup.exe
 git tag v0.3.0 && git push origin v0.3.0   # paleidžia macOS paketo kūrimą CI
 pnpm run fetch:mac           # dist/SaskaitaGO.dmg iš dabartinio komito CI vykdymo
-pnpm run publish:downloads   # įkelia visus keturis paketus į nukreipimo puslapio serverį
+pnpm run publish:downloads   # įkelia visus keturis paketus į nukreipimo puslapio serverį ir GitHub leidimą
 ```
 
-`publish:downloads` neįkelia nepilno rinkinio; tai galima apeiti su `ALLOW_PARTIAL=1`. `fetch:mac` naudoja `GH_TOKEN` arba git išsaugotą GitHub prisijungimą. Mac kompiuteryje `pnpm run dist:mac` sukuria universalų atvaizdą tiesiogiai, o Windows sistemoje `pnpm run dist:windows` sukuria diegimo programą be Docker.
+`publish:downloads` neįkelia nepilno rinkinio; tai galima apeiti su `ALLOW_PARTIAL=1`, tada GitHub leidimas praleidžiamas. Su pilnu rinkiniu sukuriamas `v<versija>` žymos leidimas (žyma jau turi būti GitHub) arba pakeičiami esamo leidimo failai; `SKIP_GITHUB_RELEASE=1` leidimo nekuria. `fetch:mac` ir `publish:downloads` naudoja `GH_TOKEN` arba git išsaugotą GitHub prisijungimą. Mac kompiuteryje `pnpm run dist:mac` sukuria universalų atvaizdą tiesiogiai, o Windows sistemoje `pnpm run dist:windows` sukuria diegimo programą be Docker.
 
 ### Duomenys ir atsarginės kopijos
 
