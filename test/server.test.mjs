@@ -185,18 +185,3 @@ test("individual activity report returns the journal and the tax estimate", asyn
   assert.equal(report.body.estimate.year, 2026);
   assert.equal((await api("/api/reports/iv?year=abc")).status, 400);
 });
-
-test("payment QR code is printed for valid bank details and can be turned off", async () => {
-  await api("/api/settings", { method: "PUT", body: { ...company, iban: "LT121000011101001000", showPaymentQr: true } });
-  const created = await api("/api/invoices", { method: "POST", body: invoice({ issueDate: "2027-03-01" }) });
-  const page = () => fetch(`${base}/invoice/${created.body.invoice.id}`).then((response) => response.text());
-  assert.match(await page(), /class="payment-qr-code"[^>]*><svg/);
-  await api("/api/settings", { method: "PUT", body: { showPaymentQr: false } });
-  assert.doesNotMatch(await page(), /payment-qr-code/);
-  await api("/api/settings", { method: "PUT", body: { showPaymentQr: true, iban: "LT121000011101001001" } });
-  // The earlier invoice keeps the IBAN from its issue time; a new one gets the mistyped IBAN and no code.
-  assert.match(await page(), /payment-qr-code/);
-  const mistyped = await api("/api/invoices", { method: "POST", body: invoice({ issueDate: "2027-03-02" }) });
-  const mistypedPage = await fetch(`${base}/invoice/${mistyped.body.invoice.id}`).then((response) => response.text());
-  assert.doesNotMatch(mistypedPage, /payment-qr-code/);
-});

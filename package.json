@@ -20,7 +20,7 @@
     "fetch:mac": "bash scripts/fetch-mac-build.sh",
     "publish:downloads": "bash scripts/publish-downloads.sh",
     "test": "node --test",
-    "check": "node --check server.mjs && node --check lib/amount-words.mjs && node --check lib/lookup.mjs && node --check lib/isaf.mjs && node --check lib/iv-journal.mjs && node --check lib/iv-tax.mjs && node --check lib/epc-qr.mjs && node --check electron/main.mjs && node --check electron/updater.mjs && node --check public/app.js && node --check public/i18n.js && node --check public/invoice.js",
+    "check": "node --check server.mjs && node --check lib/amount-words.mjs && node --check lib/lookup.mjs && node --check lib/isaf.mjs && node --check lib/iv-journal.mjs && node --check lib/iv-tax.mjs && node --check electron/main.mjs && node --check electron/updater.mjs && node --check public/app.js && node --check public/i18n.js && node --check public/invoice.js",
     "format": "prettier --write .",
     "format:check": "prettier --check ."
   },
@@ -95,7 +95,6 @@
   },
   "repository": "github:cloudcore-app/saskaitago",
   "dependencies": {
-    "electron-updater": "6.8.9",
-    "qrcode": "^1.5.4"
+    "electron-updater": "6.8.9"
   }
 }

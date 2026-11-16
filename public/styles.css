@@ -685,6 +685,14 @@ input[name="clientName"] {
   color: #292d35;
   outline: none;
 }
+/* The text field sizing above must not stretch checkboxes and radios placed inside a field. */
+.field input[type="checkbox"],
+.field input[type="radio"] {
+  width: auto;
+  height: auto;
+  padding: 0;
+  flex: none;
+}
 .field textarea {
   height: auto;
   min-height: 65px;

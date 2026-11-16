@@ -5,7 +5,6 @@ import { createHash, randomUUID } from "node:crypto";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { amountInWords } from "./lib/amount-words.mjs";
-import { epcQrSvg } from "./lib/epc-qr.mjs";
 import { checkVatCode, lookupCompany } from "./lib/lookup.mjs";
 import { ZERO_RATE_REASONS, buildIsaf, defaultZeroRateCode } from "./lib/isaf.mjs";
 import { incomeJournal } from "./lib/iv-journal.mjs";
@@ -94,7 +93,6 @@ const initialData = () => ({
     outputDirectory: "",
     series: "SG",
     paymentTermDays: 14,
-    showPaymentQr: true,
     uiLanguage: "lt",
     uiTheme: "light",
   },
@@ -261,8 +259,6 @@ function sanitizeSettings(input, current) {
       Number.isInteger(Number(input.paymentTermDays)) && Number(input.paymentTermDays) >= 1 && Number(input.paymentTermDays) <= 365
         ? Number(input.paymentTermDays)
         : Number(current.paymentTermDays) || 14,
-    showPaymentQr:
-      input.showPaymentQr === undefined ? current.showPaymentQr !== false : [true, "true", "on", 1, "1"].includes(input.showPaymentQr),
     uiLanguage: oneOf(input.uiLanguage, UI_LANGUAGES, current.uiLanguage || "lt"),
     uiTheme: oneOf(input.uiTheme, UI_THEMES, current.uiTheme || "light"),
   };
@@ -604,20 +600,6 @@ async function printInvoice(res, id) {
     .filter(([, value]) => value)
     .map(([label, value]) => `<p><b>${label}:</b> ${escapeHtml(value)}</p>`)
     .join("");
-  // Bank details come from the snapshot taken at issue time, like the rest of the seller block.
-  const qrSvg =
-    data.settings.showPaymentQr !== false && invoice.type !== "credit" && invoice.status !== "cancelled"
-      ? await epcQrSvg({
-          name: seller.paymentRecipient || seller.company,
-          iban: seller.iban,
-          bic: seller.swift,
-          amount: amountDue,
-          remittance: `${PAYMENT_PURPOSE[invoice.type]} ${invoice.number}`,
-        })
-      : "";
-  const paymentQr = qrSvg
-    ? `<div class="payment-qr"><div class="payment-qr-code" role="img" aria-label="Mokėjimo QR kodas">${qrSvg}</div><span>Nuskaitykite banko programėle</span></div>`
-    : "";
   const relation = invoice.relatedInvoiceNumber
     ? `<div class="relation">${invoice.type === "credit" ? "Kredituojama sąskaita" : "Pagal išankstinę sąskaitą"} Nr. ${escapeHtml(invoice.relatedInvoiceNumber)}</div>`
     : "";
@@ -645,7 +627,7 @@ async function printInvoice(res, id) {
 <section class="title-row"><div><h1>${escapeHtml(invoice.documentTitle)}</h1><div class="invoice-number">Sąskaitos Nr. <b>${escapeHtml(invoice.number)}</b></div>${relation}</div><div class="date-box"><div class="date-entry">Išrašymo data<strong>${date(invoice.issueDate)}</strong></div>${invoice.dueDate ? `<div class="date-entry">Apmokėti iki<strong>${date(invoice.dueDate)}</strong></div>` : ""}</div></section>
 <section class="parties"><div><h2 class="party-label">Pardavėjas</h2><div class="party-name">${escapeHtml(seller.company)}</div>${partyDetails(seller)}</div><div><h2 class="party-label">Pirkėjas</h2><div class="party-name">${escapeHtml(invoice.client.name)}</div>${partyDetails(invoice.client)}</div></section>
 <table class="items"><thead><tr><th>#</th><th>Prekė arba paslauga</th><th class="align-right">Kiekis</th><th class="align-right">Kaina</th><th class="align-right">PVM</th><th class="align-right">Suma</th></tr></thead><tbody>${items}</tbody></table>
-<section class="lower"><div class="payment"><div class="payment-details"><h2>BANKO REKVIZITAI</h2>${bankLines}<p><b>Mokėjimo paskirtis:</b> ${PAYMENT_PURPOSE[invoice.type]} ${escapeHtml(invoice.number)}</p></div>${paymentQr}</div><div class="totals"><div class="total-row"><span>Suma be PVM</span><b>${money(invoice.subtotal)}</b></div><div class="total-row"><span>PVM</span><b>${money(invoice.vatAmount)}</b></div>${advance}<div class="total-row grand"><span>${grandLabel}</span><b>${money(amountDue)}</b></div><div class="amount-words"><span>Suma žodžiais</span>${escapeHtml(amountInWords(amountDue))}</div></div></section>
+<section class="lower"><div class="payment"><h2>BANKO REKVIZITAI</h2>${bankLines}<p><b>Mokėjimo paskirtis:</b> ${PAYMENT_PURPOSE[invoice.type]} ${escapeHtml(invoice.number)}</p></div><div class="totals"><div class="total-row"><span>Suma be PVM</span><b>${money(invoice.subtotal)}</b></div><div class="total-row"><span>PVM</span><b>${money(invoice.vatAmount)}</b></div>${advance}<div class="total-row grand"><span>${grandLabel}</span><b>${money(amountDue)}</b></div><div class="amount-words"><span>Suma žodžiais</span>${escapeHtml(amountInWords(amountDue))}</div></div></section>
 ${invoice.zeroRateCode && ZERO_RATE_REASONS[invoice.zeroRateCode] ? `<section class="notes vat-basis"><h2>0 % PVM taikymo pagrindas</h2><div>${escapeHtml(ZERO_RATE_REASONS[invoice.zeroRateCode].label)}</div></section>` : ""}
 ${invoice.notes ? `<section class="notes"><h2>Papildoma informacija</h2><div>${escapeHtml(invoice.notes)}</div></section>` : ""}
 <footer class="footer"><span>${escapeHtml(seller.company || "SaskaitaGO")}${footerCode}</span><span>${escapeHtml(invoice.number)} · ${escapeHtml(seller.email)}</span><a class="powered-by-invoice" href="https://cloudcore.lt" target="_blank" rel="noopener noreferrer">POWERED BY CLOUDCORE.LT ↗</a></footer>

@@ -14,7 +14,6 @@ Website and downloads: [saskaitago.lt](https://saskaitago.lt). The full source o
 - Use the interface in Lithuanian or English, with light and dark themes.
 - Read the in-app guide and print A4 invoices.
 - Print the amount due in words (*suma žodžiais*) on every invoice.
-- Print an EPC payment QR code (EPC069-12) next to the bank details: banking apps that support the standard fill in the recipient, IBAN, amount, and payment purpose. It appears when a valid IBAN is set and can be turned off in the company settings.
 - Fill in a client's name and VAT code from the company code (Register of Legal Entities and VMI open data), and check VAT codes in the EU VIES system.
 - Export the i.SAF register of issued invoices (XML, version 1.2) for any month.
 - For individual activity: keep the income journal (cash basis, by payment date) as an Excel file and estimate GPM, VSD, and PSD with the 2026 rules.
@@ -127,7 +126,6 @@ SaskaitaGO – darbalaukio sąskaitų išrašymo programa Lietuvos individualią
 - Naudokite lietuvių arba anglų kalbą ir šviesią arba tamsią temą.
 - Peržiūrėkite naudojimo vadovą ir spausdinkite A4 formato dokumentus.
 - Kiekvienoje sąskaitoje spausdinama suma žodžiais.
-- Šalia banko rekvizitų spausdinamas EPC mokėjimo QR kodas (EPC069-12): standartą palaikančios banko programėlės užpildo gavėją, IBAN, sumą ir mokėjimo paskirtį. Kodas rodomas, kai nurodytas teisingas IBAN; jį galima išjungti įmonės nustatymuose.
 - Pagal įmonės kodą užpildykite kliento pavadinimą ir PVM kodą (Registrų centro ir VMI atvirieji duomenys), o PVM kodus patikrinkite ES VIES sistemoje.
 - Bet kuriam mėnesiui eksportuokite išrašytų sąskaitų i.SAF registrą (XML, 1.2 versija).
 - Individualiai veiklai: pajamų žurnalas (pinigų principu, pagal apmokėjimo datą) Excel formatu ir GPM, VSD bei PSD skaičiuoklė pagal 2026 m. taisykles.
