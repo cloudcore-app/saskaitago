@@ -264,7 +264,40 @@ body {
 .payment {
   flex: 1;
   align-self: flex-end;
+  display: flex;
+  align-items: flex-end;
+  gap: 18px;
   padding-bottom: 4px;
+}
+.payment-details {
+  min-width: 0;
+}
+.payment-qr {
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+}
+/* About 25 mm: comfortably above the size banking apps need to read the code from paper or a screen. */
+.payment-qr-code {
+  width: 25mm;
+  height: 25mm;
+  padding: 2mm;
+  background: #fff;
+  border: 1px solid #e8eaf0;
+  border-radius: 6px;
+}
+.payment-qr-code svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+.payment-qr span {
+  color: #9297a2;
+  font-size: 7.5px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
 }
 .payment h2,
 .notes h2 {

@@ -383,6 +383,11 @@
     ["Apmokėjimo data", "Payment date"],
     ["Data, kai pinigai gauti. Ji naudojama pajamų žurnale.", "The date the money arrived. It is used in the income journal."],
     ["Apmokėjimo data negali būti ateityje", "The payment date cannot be in the future"],
+    ["Rodyti mokėjimo QR kodą sąskaitoje", "Show a payment QR code on invoices"],
+    [
+      "Pirkėjas nuskaito kodą banko programėle, ir gavėjas, IBAN, suma bei paskirtis užpildomi automatiškai (EPC QR standartas). Kodas rodomas, kai nurodytas teisingas IBAN.",
+      "The customer scans the code with a banking app, which fills in the recipient, IBAN, amount and purpose (EPC QR standard). The code appears when a valid IBAN is set.",
+    ],
     ["Ataskaitos", "Reports"],
     ["SASKAITAGO · ATASKAITOS", "SASKAITAGO · REPORTS"],
     ["Mokesčių ataskaitos, paruoštos iš jūsų sąskaitų.", "Tax reports prepared from your invoices."],
