@@ -149,3 +149,39 @@ test("import rejects malformed invoices", async () => {
   });
   assert.equal(status, 400);
 });
+
+test("payment date is stored and cannot be in the future", async () => {
+  await api("/api/settings", { method: "PUT", body: company });
+  const created = await api("/api/invoices", { method: "POST", body: invoice({ issueDate: "2027-01-05" }) });
+  const id = created.body.invoice.id;
+  const future = await api(`/api/invoices/${id}/status`, { method: "PATCH", body: { status: "paid", paidAt: "2999-01-01" } });
+  assert.equal(future.status, 400);
+  const paid = await api(`/api/invoices/${id}/status`, { method: "PATCH", body: { status: "paid", paidAt: "2026-06-05" } });
+  assert.equal(paid.status, 200);
+  assert.equal(paid.body.invoice.paidAt, "2026-06-05");
+});
+
+test("0 % VAT basis is stored, printed and reported in i.SAF", async () => {
+  await api("/api/settings", { method: "PUT", body: { ...company, vatStatus: "standard", vatCode: "LT100000000001" } });
+  const created = await api("/api/invoices", {
+    method: "POST",
+    body: invoice({ issueDate: "2027-02-01", zeroRateCode: "PVM12", client: { name: "EXPORT LTD" } }),
+  });
+  assert.equal(created.body.invoice.zeroRateCode, "PVM12");
+  const page = await fetch(`${base}/invoice/${created.body.invoice.id}`).then((response) => response.text());
+  assert.match(page, /0 % PVM taikymo pagrindas/);
+  assert.match(page, /Suma žodžiais<\/span>Šimtas eurų 00 ct/);
+  const report = await api("/api/reports/isaf?from=2027-02-01&to=2027-02-28");
+  assert.equal(report.status, 200);
+  assert.equal(report.body.summary.count, 1);
+  assert.match(report.body.xml, /<TaxCode>PVM12<\/TaxCode>/);
+  assert.equal((await api("/api/reports/isaf?from=2026-07-31&to=2026-07-01")).status, 400);
+});
+
+test("individual activity report returns the journal and the tax estimate", async () => {
+  const report = await api("/api/reports/iv?year=2026&expenseMode=flat");
+  assert.equal(report.status, 200);
+  assert.ok(Array.isArray(report.body.journal.rows));
+  assert.equal(report.body.estimate.year, 2026);
+  assert.equal((await api("/api/reports/iv?year=abc")).status, 400);
+});

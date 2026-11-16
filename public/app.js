@@ -20,6 +20,7 @@ const state = {
   pageSize: 10,
   clientSearch: "",
   search: "",
+  reports: { isafMonth: "", ivYear: "", expenseMode: "flat", actualExpenses: "" },
   preferences,
 };
 function applyPreferences() {
@@ -355,6 +356,7 @@ function hydrateHeader() {
     dashboard: "Dashboard",
     invoices: "Sąskaitos",
     clients: "Klientai",
+    reports: "Ataskaitos",
     "settings-company": "Įmonės duomenys",
     "settings-program": "Programos nustatymai",
     help: "Naudojimo vadovas",
@@ -373,6 +375,7 @@ function render() {
   );
   if (state.view === "clients") renderClients();
   else if (state.view === "dashboard") renderDashboard();
+  else if (state.view === "reports") renderReports();
   else if (state.view === "settings-company" || state.view === "settings-program")
     renderSettingsPage(state.view === "settings-program" ? "program" : "company");
   else if (state.view === "help") renderHelpPage();
@@ -420,6 +423,190 @@ function renderDashboard() {
   }`;
   $("#content").innerHTML =
     `<div class="page-head dashboard-page-head"><div><div class="eyebrow">SASKAITAGO · APŽVALGA</div><h1>Dashboard</h1><p>Jūsų veiklos santrauka vienoje vietoje.</p></div><div class="dashboard-quick-actions"><button class="secondary-button" data-action="new-client">＋ Klientas</button><button class="primary-button" data-action="new-invoice">＋ Nauja sąskaita</button></div></div>${isEmpty ? startView : overview}`;
+}
+
+function previousMonth() {
+  const d = new Date();
+  d.setDate(1);
+  d.setMonth(d.getMonth() - 1);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+}
+const monthEnd = (month) => {
+  const [year, m] = month.split("-").map(Number);
+  return `${month}-${String(new Date(year, m, 0).getDate()).padStart(2, "0")}`;
+};
+const percent = (value) => `${(value * 100).toLocaleString("lt-LT", { maximumFractionDigits: 2 })} %`;
+
+function renderReports() {
+  $("#content").classList.add("content-wide");
+  const r = state.reports;
+  r.isafMonth ||= previousMonth();
+  r.ivYear ||= String(new Date().getFullYear());
+  const s = state.settings;
+  const vatPayer = s.vatStatus === "standard" || (s.vatStatus !== "svs" && Boolean(s.vatCode?.trim()));
+  const individual = s.businessType === "individual";
+  const years = [
+    ...new Set([new Date().getFullYear(), ...state.invoices.map((invoice) => Number((invoice.paidAt || "").slice(0, 4))).filter(Boolean)]),
+  ].sort((a, b) => b - a);
+
+  const isafCard = `<section class="settings-card report-card"><div class="settings-card-head"><span class="settings-symbol">${uiIcon("document")}</span><div><h2>i.SAF – išrašytų sąskaitų registras</h2><p>XML rinkmena VMI i.SAF sistemai. Teikiama iki kito mėnesio 20 d.; išankstinės sąskaitos neįtraukiamos.</p></div></div>${
+    vatPayer
+      ? `<div class="report-controls"><div class="field"><label>Laikotarpis</label><input type="month" id="isafMonth" value="${esc(r.isafMonth)}" max="${today().slice(0, 7)}"></div><button class="primary-button" type="button" data-action="download-isaf">Atsisiųsti i.SAF XML</button></div><div id="isafSummary" class="report-summary"><span class="hint">Skaičiuojama…</span></div>`
+      : `<div class="report-note">${s.vatStatus === "svs" ? "SVS taikantys asmenys i.SAF rinkmenos neteikia." : "i.SAF teikia tik PVM mokėtojai. Jei esate PVM mokėtojas, įrašykite PVM kodą įmonės nustatymuose."}</div>`
+  }</section>`;
+
+  const ivCard = individual
+    ? `<section class="settings-card report-card"><div class="settings-card-head"><span class="settings-symbol">${uiIcon("book")}</span><div><h2>Pajamų žurnalas ir mokesčių skaičiuoklė</h2><p>Individualios veiklos pajamos pagal apmokėjimo datą (pinigų principu), be PVM. Mokesčiai apskaičiuojami pagal 2026 m. tarifus.</p></div></div>
+      <div class="report-controls"><div class="field"><label>Metai</label><select id="ivYear">${years.map((year) => `<option value="${year}" ${String(year) === r.ivYear ? "selected" : ""}>${year}</option>`).join("")}</select></div><div class="field"><label>Išlaidos</label><select id="ivExpenseMode"><option value="flat" ${r.expenseMode === "flat" ? "selected" : ""}>30 % nuo pajamų</option><option value="actual" ${r.expenseMode === "actual" ? "selected" : ""}>Faktinės išlaidos</option></select></div><div class="field" id="ivActualField" ${r.expenseMode === "actual" ? "" : "hidden"}><label>Faktinės išlaidos per metus (€)</label><input id="ivActualExpenses" type="number" min="0" step="0.01" value="${esc(r.actualExpenses)}" placeholder="0,00"></div><div class="field"><label>Veiklos mėnesių</label><input id="ivMonths" type="number" min="0" max="12" step="1" value="${esc(r.activeMonths ?? 12)}"></div></div>
+      <div class="report-checks"><label class="check-row"><input type="checkbox" id="ivPension" ${r.pension ? "checked" : ""}><span>Kaupiu papildomus 3 % pensijai (II pakopa)</span></label><label class="check-row"><input type="checkbox" id="ivInsured" ${r.insured ? "checked" : ""}><span>Esu draustas PSD kitur (pvz., dirbu pagal darbo sutartį) – minimali PSD įmoka netaikoma</span></label></div>
+      <div id="ivResult"><span class="hint">Skaičiuojama…</span></div></section>`
+    : `<section class="settings-card report-card"><div class="settings-card-head"><span class="settings-symbol">${uiIcon("book")}</span><div><h2>Pajamų žurnalas</h2><p>Pajamų ir išlaidų žurnalas bei GPM, VSD ir PSD skaičiuoklė skirti individualiai veiklai pagal pažymą. MB ir UAB apskaitą tvarko buhalteris.</p></div></div></section>`;
+
+  $("#content").innerHTML =
+    `<div class="page-head"><div><div class="eyebrow">SASKAITAGO · ATASKAITOS</div><h1>Ataskaitos</h1><p>Mokesčių ataskaitos, paruoštos iš jūsų sąskaitų.</p></div></div><div class="reports-grid">${isafCard}${ivCard}</div>`;
+  enhanceSelects($("#content"));
+  if (vatPayer) {
+    $("#isafMonth").addEventListener("change", (event) => {
+      if (!event.target.value) return;
+      r.isafMonth = event.target.value;
+      loadIsafSummary();
+    });
+    loadIsafSummary();
+  }
+  if (individual) {
+    const reload = () => {
+      r.ivYear = $("#ivYear").value;
+      r.expenseMode = $("#ivExpenseMode").value;
+      r.actualExpenses = $("#ivActualExpenses").value;
+      r.activeMonths = $("#ivMonths").value;
+      r.pension = $("#ivPension").checked;
+      r.insured = $("#ivInsured").checked;
+      $("#ivActualField").hidden = r.expenseMode !== "actual";
+      loadIvReport();
+    };
+    for (const id of ["ivYear", "ivExpenseMode", "ivPension", "ivInsured"]) $(`#${id}`).addEventListener("change", reload);
+    for (const id of ["ivActualExpenses", "ivMonths"]) $(`#${id}`).addEventListener("input", reload);
+    loadIvReport();
+  }
+}
+
+async function fetchIsaf() {
+  const month = state.reports.isafMonth;
+  return api(`/api/reports/isaf?from=${month}-01&to=${monthEnd(month)}`);
+}
+
+async function loadIsafSummary() {
+  const box = $("#isafSummary");
+  try {
+    const report = await fetchIsaf();
+    if (!$("#isafSummary")) return;
+    const warnings = report.warnings.length
+      ? `<ul class="report-warnings">${report.warnings.map((warning) => `<li>${esc(warning)}</li>`).join("")}</ul>`
+      : "";
+    box.innerHTML = `<div class="report-stats"><div class="report-stat"><span>Sąskaitų</span><b>${report.summary.count}</b></div><div class="report-stat"><span>Apmokestinamoji vertė</span><b>${currency(report.summary.taxable)}</b></div><div class="report-stat"><span>PVM suma</span><b>${currency(report.summary.vat)}</b></div></div>${
+      report.summary.count ? "" : `<p class="hint">Šiuo laikotarpiu sąskaitų nėra. VMI reikalauja pateikti ir tuščią registrą.</p>`
+    }${warnings}`;
+  } catch (error) {
+    box.innerHTML = `<p class="report-error">${esc(friendlyError(error))}</p>`;
+  }
+}
+
+async function loadIvReport() {
+  const r = state.reports;
+  const params = new URLSearchParams({
+    year: r.ivYear,
+    expenseMode: r.expenseMode,
+    actualExpenses: r.actualExpenses || 0,
+    months: r.activeMonths ?? 12,
+    pension: r.pension ? "1" : "0",
+    insured: r.insured ? "1" : "0",
+  });
+  const request = (loadIvReport.request = api(`/api/reports/iv?${params}`));
+  const box = $("#ivResult");
+  try {
+    const { journal, estimate } = await request;
+    // A newer request replaced this one while it was running.
+    if (request !== loadIvReport.request || !$("#ivResult")) return;
+    state.reports.lastJournal = journal;
+    const tile = (label, value, note = "", strong = false) =>
+      `<div class="report-stat ${strong ? "strong" : ""}"><span>${label}</span><b>${value}</b>${note ? `<small>${note}</small>` : ""}</div>`;
+    const stats = `<div class="report-stats wide">${[
+      tile("Pajamos be PVM", currency(estimate.income), `${journal.rows.length} įrašai žurnale`),
+      tile("Atskaitomos išlaidos", currency(estimate.expenses), r.expenseMode === "flat" ? "30 % nuo pajamų" : "faktinės"),
+      tile(
+        "Apmokestinamosios pajamos",
+        currency(estimate.taxable),
+        estimate.contributionsDeducted ? `atskaityta VSD ir PSD ${currency(estimate.contributionsDeducted)}` : "",
+      ),
+      tile("GPM", currency(estimate.gpm), `efektyvus tarifas ${estimate.effectiveGpmRate.toLocaleString("lt-LT")} %`),
+      tile("VSD", currency(estimate.vsd), `${percent(estimate.vsdRate)} × ${currency(estimate.contributionBase)}`),
+      tile("PSD", currency(estimate.psd), estimate.psdMinimumApplied ? "taikoma minimali įmoka" : "6,98 %"),
+      tile("Iš viso mokesčių", currency(estimate.total), "", true),
+      tile("Lieka jums", currency(estimate.netIncome), "", true),
+    ].join("")}</div>`;
+    const notes = [
+      estimate.beyondCreditRange
+        ? "Apmokestinamosios pajamos viršija 42 500 €, todėl GPM lengvata netaikoma; tikslus GPM priklauso ir nuo kitų metinių pajamų."
+        : "",
+      Number(r.ivYear) !== estimate.rulesYear ? `Skaičiuojama pagal ${estimate.rulesYear} m. tarifus.` : "",
+    ].filter(Boolean);
+    const maxMonth = Math.max(1, ...journal.months.map((month) => Math.abs(month.income)));
+    const monthNames = ["Sau", "Vas", "Kov", "Bal", "Geg", "Bir", "Lie", "Rgp", "Rgs", "Spa", "Lap", "Gru"];
+    const chart = `<div class="month-bars" role="img" aria-label="Pajamos pagal mėnesius">${journal.months
+      .map(
+        (month) =>
+          `<div class="month-bar" title="${monthNames[month.month - 1]}: ${currency(month.income)}"><i style="height:${Math.round((Math.max(0, month.income) / maxMonth) * 100)}%"></i><span>${monthNames[month.month - 1]}</span></div>`,
+      )
+      .join("")}</div>`;
+    const rows = journal.rows
+      .map(
+        (row) =>
+          `<tr><td>${row.no}</td><td>${date(row.date)}</td><td>${esc(row.document)}</td><td>${esc(row.operation)}</td><td class="amount-cell">${currency(row.income)}</td></tr>`,
+      )
+      .join("");
+    const table = rows
+      ? `<div class="table-card journal-table"><table class="invoice-table"><thead><tr><th>Eil. Nr.</th><th>Data</th><th>Dokumentas</th><th>Operacijos turinys</th><th>Pajamų suma</th></tr></thead><tbody>${rows}</tbody><tfoot><tr><td colspan="4">Iš viso</td><td class="amount-cell">${currency(journal.totals.income)}</td></tr></tfoot></table></div>`
+      : `<p class="hint">${r.ivYear} m. apmokėtų sąskaitų nėra. Pajamos įrašomos į žurnalą, kai sąskaita pažymima kaip apmokėta.</p>`;
+    box.innerHTML = `${stats}${notes.map((note) => `<p class="report-note">${esc(note)}</p>`).join("")}${chart}<div class="report-section-head"><h3>Pajamų ir išlaidų apskaitos žurnalas · ${esc(r.ivYear)}</h3><button class="secondary-button" type="button" data-action="download-journal" ${rows ? "" : "disabled"}>Atsisiųsti žurnalą (.xls)</button></div>${table}<p class="hint report-disclaimer">Skaičiavimas preliminarus ir skirtas planavimui. Galutinė suma nustatoma deklaracijoje GPM311 ir Sodros skaičiavimuose; pirmaisiais veiklos metais VSD gali būti netaikomos. Išlaidų stulpelius žurnale pildykite patys.</p>`;
+  } catch (error) {
+    if (request === loadIvReport.request && $("#ivResult")) box.innerHTML = `<p class="report-error">${esc(friendlyError(error))}</p>`;
+  }
+}
+
+// Columns follow the VMI journal for individual activity; expense columns are left for the user.
+function journalXls(journal) {
+  const x = (value) =>
+    String(value ?? "")
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;");
+  const cell = (value) =>
+    typeof value === "number"
+      ? `<Cell><Data ss:Type="Number">${value}</Data></Cell>`
+      : `<Cell><Data ss:Type="String">${x(value)}</Data></Cell>`;
+  const row = (cells) => `<Row>${cells.map(cell).join("")}</Row>`;
+  const s = state.settings;
+  const rows = [
+    ["Gyventojo individualios veiklos pajamų ir išlaidų apskaitos žurnalas"],
+    [`Metai: ${journal.year}`],
+    [`Vardas, pavardė: ${s.company || ""}`, `Asmens kodas: ${s.personalCode || ""}`],
+    [`Gyvenamoji vieta: ${s.address || ""}`, `Veiklos pažymos Nr.: ${s.activityNumber || ""}`],
+    [],
+    [
+      "Eil. Nr.",
+      "Data",
+      "Dokumento data, pavadinimas ir numeris",
+      "Operacijos turinys",
+      "Pajamų suma, Eur",
+      "Prekių, medžiagų, žaliavų, detalių įsigijimo išlaidos, Eur",
+      "Eksploatacinės išlaidos, ilgalaikio turto nusidėvėjimas, Eur",
+      "Mokesčiai, rinkliavos, Eur",
+    ],
+    ...journal.rows.map((item) => [item.no, item.date, item.document, item.operation, item.income, "", "", ""]),
+    ["", "", "", "Iš viso", journal.totals.income, "", "", ""],
+  ];
+  return `<?xml version="1.0" encoding="UTF-8"?><Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet" xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet"><Worksheet ss:Name="Žurnalas ${journal.year}"><Table>${rows.map(row).join("")}</Table></Worksheet></Workbook>`;
 }
 
 function paginationMarkup(page, pageCount, action) {
@@ -664,12 +851,13 @@ function uiIcon(name) {
 
 function renderSettingsPage(section = "company") {
   const s = state.settings;
+  const sellerLookupFields = { code: "companyCode", name: "company", vat: "vatCode", address: "address" };
   const company = section === "company";
   const representativeFields = ["mb", "uab"].includes(s.businessType)
     ? `<div class="field full"><label>Atstovo vardas</label><input name="representativeName" value="${esc(s.representativeName)}" placeholder="Vardas ir pavardė" autocomplete="name"></div>`
     : "";
   const outputDirectoryCard = `<section class="settings-card output-directory-card"><div class="settings-card-head"><span class="settings-symbol">${uiIcon("folder")}</span><div><h2>PDF išvesties aplankas</h2><p>Pasirinkite vietą, kurioje programa išsaugos sąskaitų PDF failus.</p></div></div><div class="output-directory-row"><input form="settingsForm" id="outputDirectory" name="outputDirectory" value="${esc(s.outputDirectory || "")}" placeholder="Pasirinkite aplanką savo kompiuteryje"><button type="button" class="secondary-button" data-action="choose-output-directory">${uiIcon("folder")} Pasirinkti aplanką</button></div><span class="hint">Išsaugant PDF failą, jis bus įrašytas į šį aplanką. Jei aplankas nepasirinktas, galėsite nurodyti vietą kiekvieną kartą.</span></section>`;
-  const companyForm = `<form id="settingsForm" class="settings-form"><section class="settings-card"><div class="settings-card-head"><span class="settings-symbol">${uiIcon("building")}</span><div><h2>Įmonės profilis</h2><p>Ši informacija rodoma jūsų išrašomuose dokumentuose.</p></div></div><div class="form-grid"><div class="field full"><label>Įmonės pavadinimas *</label><input name="company" required value="${esc((s.company || "").toLocaleUpperCase("lt-LT"))}" placeholder="UAB Pavyzdys"></div><div class="field"><label>Įmonės kodas</label><input name="companyCode" value="${esc(s.companyCode)}"></div><div class="field"><label>PVM mokėtojo kodas</label><input name="vatCode" value="${esc(s.vatCode)}" placeholder="LT100000000000"></div><div class="field full"><label>Adresas</label><input name="address" value="${esc(s.address)}"></div>${representativeFields}<div class="field"><label>El. paštas</label><input type="email" name="email" value="${esc(s.email)}"></div><div class="field"><label>Telefonas</label><input name="phone" value="${esc(s.phone)}"></div></div></section><section class="settings-card"><div class="settings-card-head"><span class="settings-symbol">${uiIcon("wallet")}</span><div><h2>Mokėjimo rekvizitai</h2><p>Visa ši informacija bus įtraukta į sąskaitas.</p></div></div><div class="form-grid"><div class="field"><label>Gavėjas</label><input name="paymentRecipient" value="${esc(s.paymentRecipient || "")}"></div><div class="field"><label>Bankas</label><input name="bank" value="${esc(s.bank || "")}"></div><div class="field"><label>IBAN</label><input name="iban" value="${esc(s.iban || "")}" placeholder="LT00 0000 0000 0000 0000"></div><div class="field"><label>SWIFT / BIC</label><input name="swift" value="${esc(s.swift || "")}" maxlength="20"></div><div class="field full"><span class="hint">Mokėjimo paskirtis sąskaitoje sudaroma automatiškai pagal jos numerį.</span></div></div></section><section class="settings-card"><div class="settings-card-head"><span class="settings-symbol">${uiIcon("document")}</span><div><h2>Dokumentai</h2><p>Numatytosios sąskaitų reikšmės ir prekės ženklas.</p></div></div><div class="form-grid"><div class="field"><label>Sąskaitų serijos prefiksas</label><input name="series" maxlength="12" value="${esc(s.series || "SG")}"><span class="hint">Pavyzdys: SG-${new Date().getFullYear()}-0001. Išankstinėms ir kreditinėms naudojamos IS ir KR serijos.</span></div><div class="field"><label>Apmokėjimo terminas (dienomis)</label><input name="paymentTermDays" type="number" min="1" max="365" step="1" required value="${esc(s.paymentTermDays ?? 14)}"><span class="hint">Automatiškai siūlomas terminas naujoms sąskaitoms.</span></div><div class="field full"><label>Įmonės logotipas</label><input type="file" id="logoFile" class="logo-file-input" accept="image/png,image/jpeg,image/webp,image/svg+xml"><input type="hidden" name="logo" value="${esc(s.logo)}"><div class="logo-uploader"><div class="logo-dropzone ${s.logo ? "has-logo" : ""}" id="logoDropzone" role="button" tabindex="0" aria-label="Įkelti įmonės logotipą"><div class="logo-preview-wrap" id="logoPreview">${s.logo ? `<img src="${esc(s.logo)}" alt="Įmonės logotipo peržiūra">` : `<span class="logo-upload-icon">${uiIcon("document")}</span>`}</div><div class="logo-drop-copy"><b id="logoUploadTitle">${s.logo ? "Logotipas įkeltas" : "Nutempkite logotipą čia"}</b><span id="logoUploadHint">${s.logo ? "Peržiūrėkite, pakeiskite arba pašalinkite vaizdą." : "arba pasirinkite failą iš savo įrenginio"}</span></div><span class="logo-upload-action">${s.logo ? "Pakeisti" : "Pasirinkti failą"}</span></div><div class="logo-upload-footer"><span>PNG, JPG, WEBP arba SVG · iki 140 KB</span>${s.logo ? `<button class="logo-remove" type="button" data-action="logo-remove">Pašalinti logotipą</button>` : ""}</div></div></div></div></section></form>`;
+  const companyForm = `<form id="settingsForm" class="settings-form"><section class="settings-card"><div class="settings-card-head"><span class="settings-symbol">${uiIcon("building")}</span><div><h2>Įmonės profilis</h2><p>Ši informacija rodoma jūsų išrašomuose dokumentuose.</p></div></div><div class="form-grid"><div class="field full"><label>Įmonės pavadinimas *</label><input name="company" required value="${esc((s.company || "").toLocaleUpperCase("lt-LT"))}" placeholder="UAB Pavyzdys"></div><div class="field"><label>Įmonės kodas</label>${lookupInput(`<input name="companyCode" value="${esc(s.companyCode)}">`, "lookup-company", sellerLookupFields)}</div><div class="field"><label>PVM mokėtojo kodas</label>${lookupInput(`<input name="vatCode" value="${esc(s.vatCode)}" placeholder="LT100000000000">`, "check-vat", sellerLookupFields)}</div><div class="field full"><label>Adresas</label><input name="address" value="${esc(s.address)}"></div>${representativeFields}<div class="field"><label>El. paštas</label><input type="email" name="email" value="${esc(s.email)}"></div><div class="field"><label>Telefonas</label><input name="phone" value="${esc(s.phone)}"></div></div></section><section class="settings-card"><div class="settings-card-head"><span class="settings-symbol">${uiIcon("wallet")}</span><div><h2>Mokėjimo rekvizitai</h2><p>Visa ši informacija bus įtraukta į sąskaitas.</p></div></div><div class="form-grid"><div class="field"><label>Gavėjas</label><input name="paymentRecipient" value="${esc(s.paymentRecipient || "")}"></div><div class="field"><label>Bankas</label><input name="bank" value="${esc(s.bank || "")}"></div><div class="field"><label>IBAN</label><input name="iban" value="${esc(s.iban || "")}" placeholder="LT00 0000 0000 0000 0000"></div><div class="field"><label>SWIFT / BIC</label><input name="swift" value="${esc(s.swift || "")}" maxlength="20"></div><div class="field full"><span class="hint">Mokėjimo paskirtis sąskaitoje sudaroma automatiškai pagal jos numerį.</span></div></div></section><section class="settings-card"><div class="settings-card-head"><span class="settings-symbol">${uiIcon("document")}</span><div><h2>Dokumentai</h2><p>Numatytosios sąskaitų reikšmės ir prekės ženklas.</p></div></div><div class="form-grid"><div class="field"><label>Sąskaitų serijos prefiksas</label><input name="series" maxlength="12" value="${esc(s.series || "SG")}"><span class="hint">Pavyzdys: SG-${new Date().getFullYear()}-0001. Išankstinėms ir kreditinėms naudojamos IS ir KR serijos.</span></div><div class="field"><label>Apmokėjimo terminas (dienomis)</label><input name="paymentTermDays" type="number" min="1" max="365" step="1" required value="${esc(s.paymentTermDays ?? 14)}"><span class="hint">Automatiškai siūlomas terminas naujoms sąskaitoms.</span></div><div class="field full"><label>Įmonės logotipas</label><input type="file" id="logoFile" class="logo-file-input" accept="image/png,image/jpeg,image/webp,image/svg+xml"><input type="hidden" name="logo" value="${esc(s.logo)}"><div class="logo-uploader"><div class="logo-dropzone ${s.logo ? "has-logo" : ""}" id="logoDropzone" role="button" tabindex="0" aria-label="Įkelti įmonės logotipą"><div class="logo-preview-wrap" id="logoPreview">${s.logo ? `<img src="${esc(s.logo)}" alt="Įmonės logotipo peržiūra">` : `<span class="logo-upload-icon">${uiIcon("document")}</span>`}</div><div class="logo-drop-copy"><b id="logoUploadTitle">${s.logo ? "Logotipas įkeltas" : "Nutempkite logotipą čia"}</b><span id="logoUploadHint">${s.logo ? "Peržiūrėkite, pakeiskite arba pašalinkite vaizdą." : "arba pasirinkite failą iš savo įrenginio"}</span></div><span class="logo-upload-action">${s.logo ? "Pakeisti" : "Pasirinkti failą"}</span></div><div class="logo-upload-footer"><span>PNG, JPG, WEBP arba SVG · iki 140 KB</span>${s.logo ? `<button class="logo-remove" type="button" data-action="logo-remove">Pašalinti logotipą</button>` : ""}</div></div></div></div></section></form>`;
   const programForm = `<form id="settingsForm" class="settings-form"><section class="settings-card"><div class="settings-card-head"><span class="settings-symbol">${uiIcon("sliders")}</span><div><h2>Programos išvaizda</h2><p>Pasirinkite patogią kalbą ir spalvų temą.</p></div></div><div class="form-grid"><div class="field"><label>Sąsajos kalba</label><select name="uiLanguage"><option value="lt" ${(s.uiLanguage || preferences.language) === "lt" ? "selected" : ""}>Lietuvių</option><option value="en" ${(s.uiLanguage || preferences.language) === "en" ? "selected" : ""}>English</option></select></div><div class="field"><label>Spalvų tema</label><select name="uiTheme"><option value="light" ${(s.uiTheme || preferences.theme) === "light" ? "selected" : ""}>Šviesi</option><option value="dark" ${(s.uiTheme || preferences.theme) === "dark" ? "selected" : ""}>Tamsi</option></select></div></div></section>${outputDirectoryCard}<section class="settings-card export-card"><div class="settings-card-head"><span class="settings-symbol">${uiIcon("lock")}</span><div><h2>Duomenų eksportas</h2><p>Atsisiųskite įmonės nustatymus, klientus ir sąskaitas į JSON, Excel arba PDF failą. JSON kopiją galima atkurti per „Importuoti JSON“.</p></div></div><div class="export-actions"><div class="field"><label>Failo formatas</label><select id="exportFormat"><option value="json">JSON</option><option value="xls">Excel (.xls)</option><option value="pdf">PDF ataskaita</option></select></div><button class="secondary-button" type="button" data-action="export-data">Eksportuoti duomenis</button><button class="ghost-button" type="button" data-action="import-data">Importuoti JSON</button><input id="importFile" type="file" accept="application/json,.json" hidden></div></section><section class="settings-card settings-info"><div class="settings-card-head"><span class="settings-symbol">${uiIcon("lock")}</span><div><h2>Duomenų saugojimas</h2><p>Darbo vieta veikia šiame kompiuteryje. Įmonės, klientų ir sąskaitų duomenys saugomi vietinėje programos darbo vietoje.</p></div></div></section></form>`;
   $("#content").innerHTML =
     `<div class="page-head settings-page-head"><div><div class="eyebrow">SASKAITAGO · KONFIGŪRACIJA</div><h1>Nustatymai</h1><p>${company ? "Tvarkykite įmonės rekvizitus, kurie naudojami sąskaitose." : "Pritaikykite programą savo darbo aplinkai."}</p></div><button class="primary-button" data-action="save-settings">Išsaugoti pakeitimus</button></div><div class="settings-layout"><nav class="settings-tabs" aria-label="Nustatymų skyriai"><button class="settings-tab ${company ? "active" : ""}" data-view="settings-company"><span>${uiIcon("building")}</span><b>Įmonė</b><small>Rekvizitai ir dokumentai</small></button><button class="settings-tab ${!company ? "active" : ""}" data-view="settings-program"><span>${uiIcon("settings")}</span><b>Programa</b><small>Kalba, tema ir duomenys</small></button><button class="settings-tab" data-view="help"><span>${uiIcon("book")}</span><b>Naudojimo vadovas</b><small>Darbo su programa instrukcija</small></button></nav><div class="settings-main">${company ? companyForm : programForm}<div class="settings-savebar"><span>Pakeitimai įsigalios išsaugojus.</span><button class="primary-button" data-action="save-settings">Išsaugoti pakeitimus</button></div></div></div>`;
@@ -737,8 +925,20 @@ function renderHelpPage() {
     `<div class="page-head settings-page-head"><div><div class="eyebrow">SASKAITAGO · PAGALBA</div><h1>Nustatymai</h1><p>Programos nustatymai ir darbo su dokumentais instrukcija.</p></div><button class="primary-button" data-action="begin-work">Pradėti dirbti</button></div><div class="settings-layout"><nav class="settings-tabs" aria-label="Nustatymų skyriai"><button class="settings-tab" data-view="settings-company"><span>${uiIcon("building")}</span><b>Įmonė</b><small>Rekvizitai ir dokumentai</small></button><button class="settings-tab" data-view="settings-program"><span>${uiIcon("settings")}</span><b>Programa</b><small>Kalba, tema ir duomenys</small></button><button class="settings-tab active" data-view="help"><span>${uiIcon("book")}</span><b>Naudojimo vadovas</b><small>Darbo su programa instrukcija</small></button></nav><div class="settings-main"><div class="help-grid"><section class="settings-card help-intro"><span class="help-kicker">PRADŽIA</span><h2>Kasdienis darbas su SaskaitaGO</h2><p>Programa padeda tvarkyti klientus, rengti pardavimo dokumentus ir sekti jų apmokėjimą. Duomenys saugomi šio kompiuterio darbo vietoje.</p></section><section class="settings-card help-card"><span class="help-number">01</span><h2>Įveskite įmonės duomenis</h2><p>Nustatymų skiltyje „Įmonė“ įrašykite pavadinimą, registracijos duomenis ir banko rekvizitus. Jie bus naudojami dokumentuose.</p></section><section class="settings-card help-card"><span class="help-number">02</span><h2>Sukurkite klientą</h2><p>Atidarykite „Klientai“ ir pasirinkite „Pridėti klientą“. Išsaugoti klientai bus pasiekiami kuriant sąskaitą.</p></section><section class="settings-card help-card"><span class="help-number">03</span><h2>Išrašykite dokumentą</h2><p>Sąskaitose pasirinkite „Nauja sąskaita“, nurodykite klientą, datas ir eilutes. Sistema apskaičiuos sumas pagal pasirinktus PVM tarifus.</p></section><section class="settings-card help-card"><span class="help-number">04</span><h2>Sekite apmokėjimą</h2><p>Sąskaitų sąraše filtruokite dokumentus pagal būseną. Gavę apmokėjimą pažymėkite sąskaitą kaip apmokėtą.</p></section><section class="settings-card help-card"><span class="help-number">05</span><h2>Dokumentų tipai</h2><p>Išankstinė sąskaita skirta avansui, PVM sąskaita faktūra – pardavimui, o kreditinė sąskaita susiejama su anksčiau išrašytu dokumentu.</p></section><section class="settings-card help-note"><b>Prieš pradedant</b><p>Patikrinkite pirkėjo duomenis, datas, PVM taikymą ir mokėjimo informaciją. Teisingą mokestinį režimą įvertinkite pagal savo sandorį.</p><button class="secondary-button" data-view="settings-company">Atidaryti įmonės nustatymus</button></section></div></div></div>`;
 }
 
+// Inputs with a registry lookup button; data-* name the fields the result is written to.
+function lookupInput(inputHtml, action, fields) {
+  const label = action === "lookup-company" ? "Ieškoti registre" : "Tikrinti VIES";
+  const title =
+    action === "lookup-company" ? "Užpildyti pavadinimą ir PVM kodą iš Registrų centro" : "Patikrinti PVM kodą ES VIES sistemoje";
+  const data = Object.entries(fields)
+    .map(([key, name]) => `data-${key}="${esc(name)}"`)
+    .join(" ");
+  return `<div class="input-action">${inputHtml}<button type="button" class="ghost-button input-action-button" data-action="${action}" ${data} title="${title}">${label}</button></div><span class="lookup-status" aria-live="polite"></span>`;
+}
+
 function clientFields(client = {}, prefix = "client") {
-  return `<div class="form-grid"><div class="field full"><label>Klientas / įmonė *</label><input name="${prefix}Name" required value="${esc((client.name || "").toLocaleUpperCase("lt-LT"))}" placeholder="Pirkėjo pavadinimas"></div><div class="field"><label>Įmonės kodas</label><input name="${prefix}CompanyCode" value="${esc(client.companyCode)}"></div><div class="field"><label>PVM kodas</label><input name="${prefix}VatCode" value="${esc(client.vatCode)}"></div><div class="field full"><label>Adresas</label><input name="${prefix}Address" value="${esc(client.address)}"></div><div class="field"><label>El. paštas</label><input type="email" name="${prefix}Email" value="${esc(client.email)}"></div><div class="field"><label>Telefonas</label><input name="${prefix}Phone" value="${esc(client.phone)}"></div></div>`;
+  const fields = { code: `${prefix}CompanyCode`, name: `${prefix}Name`, vat: `${prefix}VatCode`, address: `${prefix}Address` };
+  return `<div class="form-grid"><div class="field full"><label>Klientas / įmonė *</label><input name="${prefix}Name" required value="${esc((client.name || "").toLocaleUpperCase("lt-LT"))}" placeholder="Pirkėjo pavadinimas"></div><div class="field"><label>Įmonės kodas</label>${lookupInput(`<input name="${prefix}CompanyCode" value="${esc(client.companyCode)}" inputmode="numeric">`, "lookup-company", fields)}</div><div class="field"><label>PVM kodas</label>${lookupInput(`<input name="${prefix}VatCode" value="${esc(client.vatCode)}" placeholder="LT100000000000">`, "check-vat", fields)}</div><div class="field full"><label>Adresas</label><input name="${prefix}Address" value="${esc(client.address)}"></div><div class="field"><label>El. paštas</label><input type="email" name="${prefix}Email" value="${esc(client.email)}"></div><div class="field"><label>Telefonas</label><input name="${prefix}Phone" value="${esc(client.phone)}"></div></div>`;
 }
 
 function openNewClient() {
@@ -763,11 +963,28 @@ function isVatRegistered() {
   return ["standard", "svs"].includes(state.settings.vatStatus) || Boolean(state.settings.vatCode?.trim());
 }
 
+const ZERO_RATE_REASONS = [
+  ["PVM5", "Neapmokestinama PVM (PVMĮ 20–33 str.)"],
+  ["PVM15", "Paslaugos ES verslui, PVM moka pirkėjas (atvirkštinis apmokestinimas)"],
+  ["PVM13", "Prekių tiekimas kitos ES šalies PVM mokėtojui (PVMĮ 49 str.)"],
+  ["PVM12", "Prekių eksportas už ES ribų (PVMĮ 41 str.)"],
+  ["PVM14", "Kiti 0 % tarifo sandoriai (PVMĮ 42–48, 51–53 str.)"],
+];
+const EU_VAT_PREFIXES = "AT BE BG CY CZ DE DK EE EL ES FI FR HR HU IE IT LU LV MT NL PL PT RO SE SI SK XI".split(" ");
+function defaultZeroRateCode(client) {
+  const prefix = String(client?.vatCode || "")
+    .toUpperCase()
+    .trim()
+    .slice(0, 2);
+  return EU_VAT_PREFIXES.includes(prefix) ? "PVM15" : "PVM5";
+}
+
 function itemRow(item = {}) {
   const qty = item.quantity ?? 1,
     price = item.unitPrice ?? "",
     vat = item.vatRate ?? (isVatRegistered() ? 21 : 0);
-  const rates = isVatRegistered() ? [21, 9, 5, 0] : [0];
+  // From 2026 the 9 % rate is gone (moved to 12 %, 5 % or 21 %).
+  const rates = isVatRegistered() ? [21, 12, 5, 0] : [0];
   return `<div class="item-row"><input name="description" placeholder="Paslaugos arba prekės pavadinimas" value="${esc(item.description)}" required><input name="quantity" type="number" min="0.01" step="0.01" value="${qty}" aria-label="Kiekis"><input name="unitPrice" type="number" min="0" step="0.01" value="${price}" placeholder="0,00" aria-label="Vieneto kaina"><select name="vatRate" aria-label="PVM tarifas">${rates.map((rate) => `<option value="${rate}" ${Number(vat) === rate ? "selected" : ""}>${rate}%</option>`).join("")}</select><span class="line-total">—</span><button class="remove-item" type="button" data-action="remove-item" title="Pašalinti">×</button></div>`;
 }
 
@@ -794,7 +1011,8 @@ function openNewInvoice() {
     <div class="form-grid" style="margin-top:13px"><div class="field"><label>Išrašymo data</label><input name="issueDate" type="date" value="${today()}" required></div><div class="field"><label>Apmokėti iki</label><input name="dueDate" type="date" value="${addDays(today(), Number(state.settings.paymentTermDays ?? 14))}"></div>
     <div class="field full" id="proformaField" hidden><label>Išankstinė sąskaita</label><select name="proformaInvoiceId"><option value="">Be išankstinės sąskaitos</option>${proformaOptions}</select></div>
     <div class="field full" id="relatedField" hidden><label>Kredituojama sąskaita *</label><select name="relatedInvoiceId"><option value="">Pasirinkti sąskaitą</option>${vatOptions}</select></div>
-    <div class="field full" id="advanceField" hidden><label>Įskaitytas avansas (€)</label><input name="advanceApplied" type="number" min="0" step="0.01" value="0"><span class="hint">Sąskaitoje bus rodomos visa suma, įskaitytas avansas ir likutis.</span></div></div>
+    <div class="field full" id="advanceField" hidden><label>Įskaitytas avansas (€)</label><input name="advanceApplied" type="number" min="0" step="0.01" value="0"><span class="hint">Sąskaitoje bus rodomos visa suma, įskaitytas avansas ir likutis.</span></div>
+    <div class="field full" id="zeroRateField" hidden><label>0 % PVM taikymo pagrindas</label><select name="zeroRateCode">${ZERO_RATE_REASONS.map(([code, label]) => `<option value="${code}">${label}</option>`).join("")}</select><span class="hint">Pagrindas spausdinamas sąskaitoje ir naudojamas i.SAF rinkmenoje. Jei abejojate, pasitarkite su buhalteriu.</span></div></div>
     <div class="section-title">Prekės ir paslaugos</div><div class="items-editor"><div class="item-head"><span>Aprašymas</span><span>Kiekis</span><span>Kaina €</span><span>PVM</span><span>Suma</span><span></span></div><div id="itemsList">${itemRow()}</div></div>
     <div class="items-bottom"><button type="button" class="ghost-button" data-action="add-item">＋ Pridėti eilutę</button><div class="totals-preview"><span>Be PVM <b id="subtotalPreview">0,00 €</b></span><span>PVM <b id="vatPreview">0,00 €</b></span><span>Iš viso <b id="totalPreview">0,00 €</b></span></div></div>
     <div class="field" style="margin-top:15px"><label>Pastabos</label><textarea name="notes" placeholder="Papildoma informacija pirkėjui"></textarea></div></form>`;
@@ -819,6 +1037,9 @@ function openNewInvoice() {
     form.elements.dueDate.dataset.userEdited = "true";
   });
   $("#savedClient").addEventListener("change", updateInvoicePreview);
+  form.elements.zeroRateCode.addEventListener("input", () => {
+    $("#zeroRateField").dataset.userChosen = "true";
+  });
   updateInvoicePreview();
 }
 
@@ -839,6 +1060,19 @@ function updateInvoicePreview() {
   $("#advanceField").hidden = type !== "vat";
   $("[data-action=save-invoice]").textContent =
     type === "proforma" ? "Išrašyti išankstinę" : type === "credit" ? "Išrašyti kreditinę" : "Išrašyti sąskaitą";
+  const zeroField = $("#zeroRateField");
+  const hasZeroRate =
+    isVatRegistered() && type !== "proforma" && $$(".item-row [name=vatRate]", form).some((select) => Number(select.value) === 0);
+  // Suggest a basis when the field appears, unless the user already picked one. The field is shown before the
+  // change event so the nested preview update does not suggest again.
+  const suggest = hasZeroRate && zeroField.hidden && !zeroField.dataset.userChosen;
+  zeroField.hidden = !hasZeroRate;
+  if (suggest) {
+    const client = state.clients.find((item) => item.id === $("#savedClient")?.value);
+    const select = form.elements.zeroRateCode;
+    select.value = defaultZeroRateCode(client || { vatCode: form.elements.clientVatCode?.value });
+    select.dispatchEvent(new Event("change"));
+  }
   let subtotal = 0,
     vatTotal = 0;
   $$(".item-row", form).forEach((row) => {
@@ -856,6 +1090,52 @@ function updateInvoicePreview() {
   $("#subtotalPreview").textContent = currency(sign * subtotal);
   $("#vatPreview").textContent = currency(sign * vatTotal);
   $("#totalPreview").textContent = currency(sign * (subtotal + vatTotal));
+}
+
+function setFieldValue(control, value) {
+  if (!control || !value) return;
+  control.value = value;
+  control.dispatchEvent(new Event("input", { bubbles: true }));
+}
+
+async function runLookup(button, action) {
+  const scope = button.closest("form, .client-fields") || document;
+  const field = (name) => (name ? scope.querySelector(`[name="${name}"]`) : null);
+  const { code, name, vat, address } = button.dataset;
+  const input = field(action === "lookup-company" ? code : vat);
+  const status = input.closest(".field").querySelector(".lookup-status");
+  const report = (message, kind) => {
+    status.className = `lookup-status ${kind ? `lookup-${kind}` : ""}`;
+    status.textContent = message;
+  };
+  const value = input.value.trim();
+  if (!value) {
+    report(action === "lookup-company" ? "Įveskite įmonės kodą" : "Įveskite PVM kodą", "error");
+    input.focus();
+    return;
+  }
+  button.disabled = true;
+  report(action === "lookup-company" ? "Ieškoma registre…" : "Tikrinama VIES…");
+  try {
+    if (action === "lookup-company") {
+      const result = await api(`/api/lookup/company?code=${encodeURIComponent(value)}`);
+      setFieldValue(field(name), result.name.toLocaleUpperCase("lt-LT"));
+      setFieldValue(field(vat), result.vatCode);
+      const vatNote = result.vatCode ? `PVM kodas ${result.vatCode}` : "PVM mokėtojo kodas nerastas";
+      report(`${result.deregistered ? "⚠ Įmonė išregistruota" : "✓ Rasta"} · ${vatNote}`, result.deregistered ? "error" : "ok");
+    } else {
+      const result = await api(`/api/lookup/vat?code=${encodeURIComponent(value)}`);
+      input.value = result.vatCode;
+      if (!result.valid) return report("✗ VIES: PVM kodas negalioja", "error");
+      if (!field(name)?.value.trim()) setFieldValue(field(name), result.name.toLocaleUpperCase("lt-LT"));
+      if (!field(address)?.value.trim()) setFieldValue(field(address), result.address);
+      report(`✓ VIES: PVM kodas galioja${result.name ? ` · ${result.name}` : ""}`, "ok");
+    }
+  } catch (error) {
+    report(friendlyError(error), "error");
+  } finally {
+    button.disabled = false;
+  }
 }
 
 function readClient(form, prefix = "client") {
@@ -951,6 +1231,20 @@ document.addEventListener("click", async (event) => {
       state.view = "help";
       render();
       toast("Darbo vieta paruošta");
+      return;
+    }
+    if (action === "lookup-company" || action === "check-vat") return await runLookup(target, action);
+    if (action === "download-isaf") {
+      const report = await fetchIsaf();
+      downloadExport(report.xml, "application/xml;charset=utf-8", report.filename);
+      toast(report.warnings.length ? "i.SAF failas atsisiųstas – peržiūrėkite įspėjimus" : "i.SAF failas atsisiųstas");
+      return;
+    }
+    if (action === "download-journal") {
+      const journal = state.reports.lastJournal;
+      if (!journal) return;
+      downloadExport(`﻿${journalXls(journal)}`, "application/vnd.ms-excel;charset=utf-8", `pajamu-zurnalas-${journal.year}.xls`);
+      toast("Žurnalas atsisiųstas");
       return;
     }
     if (action === "new-invoice") return openNewInvoice();
@@ -1160,6 +1454,7 @@ document.addEventListener("click", async (event) => {
         dueDate: form.elements.dueDate.value,
         relatedInvoiceId,
         advanceApplied: form.elements.advanceApplied?.value || 0,
+        zeroRateCode: $("#zeroRateField").hidden ? "" : form.elements.zeroRateCode.value,
         notes: form.elements.notes.value,
         items,
       };
@@ -1179,10 +1474,25 @@ document.addEventListener("click", async (event) => {
       return;
     }
     if (action === "paid") {
+      const invoice = state.invoices.find((item) => item.id === target.dataset.id);
+      if (!invoice) return;
+      modal(
+        "Pažymėti kaip apmokėtą",
+        `${esc(invoice.number)} · ${esc(invoice.client.name)} · ${currency(invoice.total - (invoice.advanceApplied || 0))}`,
+        `<form id="paidForm"><div class="field"><label>Apmokėjimo data</label><input name="paidAt" type="date" required value="${today()}" max="${today()}"><span class="hint">Data, kai pinigai gauti. Ji naudojama pajamų žurnale.</span></div></form>`,
+        `<button class="secondary-button" data-action="close">Atšaukti</button><button class="primary-button" data-action="confirm-paid" data-id="${esc(invoice.id)}">Pažymėti apmokėta</button>`,
+      );
+      $("#paidForm input[name=paidAt]").focus();
+      return;
+    }
+    if (action === "confirm-paid") {
+      const form = $("#paidForm");
+      if (!validateForm(form)) return;
       const result = await api(`/api/invoices/${encodeURIComponent(target.dataset.id)}/status`, {
         method: "PATCH",
-        body: JSON.stringify({ status: "paid" }),
+        body: JSON.stringify({ status: "paid", paidAt: form.elements.paidAt.value }),
       });
+      closeModal();
       state.invoices = state.invoices.map((item) => (item.id === result.invoice.id ? result.invoice : item));
       render();
       toast("Sąskaita pažymėta kaip apmokėta");

@@ -13,8 +13,12 @@ Website and downloads: [saskaitago.lt](https://saskaitago.lt). The full source o
 - Choose an output folder for PDF invoices. New invoices are saved there as PDFs when created.
 - Use the interface in Lithuanian or English, with light and dark themes.
 - Read the in-app guide and print A4 invoices.
+- Print the amount due in words (*suma žodžiais*) on every invoice.
+- Fill in a client's name and VAT code from the company code (Register of Legal Entities and VMI open data), and check VAT codes in the EU VIES system.
+- Export the i.SAF register of issued invoices (XML, version 1.2) for any month.
+- For individual activity: keep the income journal (cash basis, by payment date) as an Excel file and estimate GPM, VSD, and PSD with the 2026 rules.
 
-Invoice templates support 21%, 9%, 5%, and 0% VAT rates. Verify tax treatment and invoice details for your business with an accountant before using issued documents for bookkeeping.
+Invoice templates support 21%, 12%, 5%, and 0% VAT rates (the 9% rate was abolished on 1 January 2026). A 0% line needs a basis (exempt, export, intra-EU supply, reverse charge, or other 0% supply); it is printed on the invoice and sets the PVM classifier code in i.SAF. The tax estimate is for planning only; the GPM311 declaration and Sodra calculations are authoritative. Verify tax treatment and invoice details for your business with an accountant before using issued documents for bookkeeping.
 
 ## Installers
 
@@ -81,7 +85,14 @@ Only one app instance runs at a time; launching it again focuses the open window
 
 ## Network access
 
-The app's server listens only on `127.0.0.1` and rejects requests from other hosts and other websites. The only outgoing connection is the update check to `https://saskaitago.lt/downloads/` (`latest.yml` or `latest-linux.yml`, and the installer when an update is downloaded). Invoices, clients, and settings are never sent anywhere. See `server.mjs` and `electron/updater.mjs`.
+The app's server listens only on `127.0.0.1` and rejects requests from other hosts and other websites. It makes outgoing connections in two cases:
+
+- **Update check:** it connects to `https://saskaitago.lt/downloads/` for `latest.yml` or `latest-linux.yml`, and downloads the installer when an update is available.
+- **Lookup buttons:** these run only when you press them, and each sends only the code being looked up.
+  - **Ieškoti registre** sends the company code to `get.data.gov.lt`, the Register of Legal Entities and VMI taxpayer open data.
+  - **Tikrinti VIES** sends the VAT code to the European Commission VIES service, `ec.europa.eu`.
+
+Invoices, clients, and settings are never sent anywhere. See `server.mjs`, `lib/lookup.mjs`, and `electron/updater.mjs`.
 
 ## Verifying downloads
 
@@ -114,8 +125,12 @@ SaskaitaGO – darbalaukio sąskaitų išrašymo programa Lietuvos individualią
 - Pasirinkite PDF išvesties aplanką. Naujos sąskaitos sukūrimo metu automatiškai išsaugomos tame aplanke.
 - Naudokite lietuvių arba anglų kalbą ir šviesią arba tamsią temą.
 - Peržiūrėkite naudojimo vadovą ir spausdinkite A4 formato dokumentus.
+- Kiekvienoje sąskaitoje spausdinama suma žodžiais.
+- Pagal įmonės kodą užpildykite kliento pavadinimą ir PVM kodą (Registrų centro ir VMI atvirieji duomenys), o PVM kodus patikrinkite ES VIES sistemoje.
+- Bet kuriam mėnesiui eksportuokite išrašytų sąskaitų i.SAF registrą (XML, 1.2 versija).
+- Individualiai veiklai: pajamų žurnalas (pinigų principu, pagal apmokėjimo datą) Excel formatu ir GPM, VSD bei PSD skaičiuoklė pagal 2026 m. taisykles.
 
-Dokumentuose galima taikyti 21 %, 9 %, 5 % arba 0 % PVM tarifą. Prieš naudodami dokumentus apskaitoje, su buhalteriu patikrinkite konkrečiam sandoriui taikomą mokestinį režimą ir rekvizitus.
+Dokumentuose galima taikyti 21 %, 12 %, 5 % arba 0 % PVM tarifą (9 % tarifas panaikintas nuo 2026-01-01). 0 % eilutėms nurodomas taikymo pagrindas; jis spausdinamas sąskaitoje ir nustato PVM klasifikatoriaus kodą i.SAF rinkmenoje. Mokesčių skaičiavimas preliminarus; galutinės sumos nustatomos deklaracijoje GPM311 ir Sodroje. Prieš naudodami dokumentus apskaitoje, su buhalteriu patikrinkite konkrečiam sandoriui taikomą mokestinį režimą ir rekvizitus.
 
 ### Diegimo paketai
 

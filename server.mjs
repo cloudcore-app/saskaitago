@@ -4,8 +4,14 @@ import { createReadStream } from "node:fs";
 import { createHash, randomUUID } from "node:crypto";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { amountInWords } from "./lib/amount-words.mjs";
+import { checkVatCode, lookupCompany } from "./lib/lookup.mjs";
+import { ZERO_RATE_REASONS, buildIsaf, defaultZeroRateCode } from "./lib/isaf.mjs";
+import { incomeJournal } from "./lib/iv-journal.mjs";
+import { estimateIvTaxes } from "./lib/iv-tax.mjs";
 
 const root = path.dirname(fileURLToPath(import.meta.url));
+const appVersion = JSON.parse(await readFile(path.join(root, "package.json"), "utf8")).version || "";
 const defaultPort = Number(process.env.PORT || 4173);
 const defaultHost = process.env.HOST || "127.0.0.1";
 let dataDir = process.env.SASKAITAGO_DATA_DIR || process.env.SaskaitaGO_DATA_DIR || path.join(root, "data");
@@ -100,6 +106,11 @@ const httpError = (status, message) => Object.assign(new Error(message), { statu
 const oneOf = (value, allowed, fallback) => (allowed.includes(value) ? value : fallback);
 function roundMoney(value) {
   return Math.round((value + Number.EPSILON) * 100) / 100;
+}
+// The app runs on the user's machine, so "today" is the local calendar date, not UTC.
+function localToday() {
+  const now = new Date();
+  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
 }
 function text(value, max = 300) {
   return String(value ?? "")
@@ -359,6 +370,9 @@ function createInvoice(data, input) {
   const number = `${counterKey}-${String(data.counters[counterKey]).padStart(4, "0")}`;
 
   if (!savedClient) data.clients.push({ ...client, createdAt: new Date().toISOString() });
+  // The basis for 0 % VAT is printed on the invoice and decides the PVM classifier code in i.SAF.
+  const hasZeroRate = type !== "proforma" && isVatPayer(data.settings) && items.some((item) => Number(item.vatRate) === 0);
+  const zeroRateCode = hasZeroRate ? (ZERO_RATE_REASONS[input.zeroRateCode] ? input.zeroRateCode : defaultZeroRateCode(client)) : "";
   const invoice = {
     id: randomUUID(),
     number,
@@ -377,6 +391,7 @@ function createInvoice(data, input) {
     relatedInvoiceId: related?.id || "",
     relatedInvoiceNumber: related?.number || "",
     advanceApplied,
+    zeroRateCode,
     createdAt: new Date().toISOString(),
     paidAt: "",
   };
@@ -491,10 +506,40 @@ async function handleApi(req, res, url) {
     const input = await readBody(req);
     if (!INVOICE_STATUSES.includes(input.status)) throw httpError(400, "Neteisingas statusas");
     if (invoice.status === "cancelled" && input.status !== "cancelled") throw httpError(400, "Atšauktos sąskaitos būsenos keisti negalima");
+    let paidAt = "";
+    if (input.status === "paid") {
+      const todayValue = localToday();
+      paidAt = DATE_PATTERN.test(input.paidAt || "") ? input.paidAt : todayValue;
+      if (paidAt > todayValue) throw httpError(400, "Apmokėjimo data negali būti ateityje");
+    }
     invoice.status = input.status;
-    invoice.paidAt = input.status === "paid" ? new Date().toISOString().slice(0, 10) : "";
+    invoice.paidAt = paidAt;
     await saveData(data);
     return json(res, 200, { invoice });
+  }
+  if (req.method === "GET" && url.pathname === "/api/reports/isaf") {
+    const from = url.searchParams.get("from") || "";
+    const to = url.searchParams.get("to") || "";
+    if (!DATE_PATTERN.test(from) || !DATE_PATTERN.test(to) || from > to) throw httpError(400, "Neteisingas laikotarpis");
+    if (from < "2016-07-01") throw httpError(400, "i.SAF laikotarpis negali prasidėti anksčiau nei 2016-07-01");
+    const report = buildIsaf({ settings: data.settings, invoices: data.invoices, from, to, softwareVersion: appVersion });
+    return json(res, 200, { ...report, filename: `iSAF_${from}_${to}.xml` });
+  }
+  if (req.method === "GET" && url.pathname === "/api/reports/iv") {
+    const year = Number(url.searchParams.get("year"));
+    if (!Number.isInteger(year) || year < 2000 || year > 2100) throw httpError(400, "Neteisingi metai");
+    const journal = incomeJournal(data.invoices, year);
+    const flag = (name) => url.searchParams.get(name) === "1";
+    const estimate = estimateIvTaxes({
+      income: journal.totals.income,
+      year,
+      expenseMode: url.searchParams.get("expenseMode") === "actual" ? "actual" : "flat",
+      actualExpenses: Number(url.searchParams.get("actualExpenses")) || 0,
+      pensionAccumulation: flag("pension"),
+      insuredElsewhere: flag("insured"),
+      activeMonths: Number(url.searchParams.get("months") ?? 12),
+    });
+    return json(res, 200, { journal, estimate });
   }
   return json(res, 404, { error: "Nerasta" });
 }
@@ -582,7 +627,8 @@ async function printInvoice(res, id) {
 <section class="title-row"><div><h1>${escapeHtml(invoice.documentTitle)}</h1><div class="invoice-number">Sąskaitos Nr. <b>${escapeHtml(invoice.number)}</b></div>${relation}</div><div class="date-box"><div class="date-entry">Išrašymo data<strong>${date(invoice.issueDate)}</strong></div>${invoice.dueDate ? `<div class="date-entry">Apmokėti iki<strong>${date(invoice.dueDate)}</strong></div>` : ""}</div></section>
 <section class="parties"><div><h2 class="party-label">Pardavėjas</h2><div class="party-name">${escapeHtml(seller.company)}</div>${partyDetails(seller)}</div><div><h2 class="party-label">Pirkėjas</h2><div class="party-name">${escapeHtml(invoice.client.name)}</div>${partyDetails(invoice.client)}</div></section>
 <table class="items"><thead><tr><th>#</th><th>Prekė arba paslauga</th><th class="align-right">Kiekis</th><th class="align-right">Kaina</th><th class="align-right">PVM</th><th class="align-right">Suma</th></tr></thead><tbody>${items}</tbody></table>
-<section class="lower"><div class="payment"><h2>BANKO REKVIZITAI</h2>${bankLines}<p><b>Mokėjimo paskirtis:</b> ${PAYMENT_PURPOSE[invoice.type]} ${escapeHtml(invoice.number)}</p></div><div class="totals"><div class="total-row"><span>Suma be PVM</span><b>${money(invoice.subtotal)}</b></div><div class="total-row"><span>PVM</span><b>${money(invoice.vatAmount)}</b></div>${advance}<div class="total-row grand"><span>${grandLabel}</span><b>${money(amountDue)}</b></div></div></section>
+<section class="lower"><div class="payment"><h2>BANKO REKVIZITAI</h2>${bankLines}<p><b>Mokėjimo paskirtis:</b> ${PAYMENT_PURPOSE[invoice.type]} ${escapeHtml(invoice.number)}</p></div><div class="totals"><div class="total-row"><span>Suma be PVM</span><b>${money(invoice.subtotal)}</b></div><div class="total-row"><span>PVM</span><b>${money(invoice.vatAmount)}</b></div>${advance}<div class="total-row grand"><span>${grandLabel}</span><b>${money(amountDue)}</b></div><div class="amount-words"><span>Suma žodžiais</span>${escapeHtml(amountInWords(amountDue))}</div></div></section>
+${invoice.zeroRateCode && ZERO_RATE_REASONS[invoice.zeroRateCode] ? `<section class="notes vat-basis"><h2>0 % PVM taikymo pagrindas</h2><div>${escapeHtml(ZERO_RATE_REASONS[invoice.zeroRateCode].label)}</div></section>` : ""}
 ${invoice.notes ? `<section class="notes"><h2>Papildoma informacija</h2><div>${escapeHtml(invoice.notes)}</div></section>` : ""}
 <footer class="footer"><span>${escapeHtml(seller.company || "SaskaitaGO")}${footerCode}</span><span>${escapeHtml(invoice.number)} · ${escapeHtml(seller.email)}</span><a class="powered-by-invoice" href="https://cloudcore.lt" target="_blank" rel="noopener noreferrer">POWERED BY CLOUDCORE.LT ↗</a></footer>
 </main>
@@ -607,6 +653,10 @@ const server = createServer(async (req, res) => {
       return json(res, 403, { error: "Užklausa iš kitos svetainės atmesta" });
     }
     const url = new URL(req.url, `http://${req.headers.host}`);
+    // Lookups wait on the network, so they bypass the queue that serializes workspace writes.
+    if (req.method === "GET" && url.pathname === "/api/lookup/company")
+      return json(res, 200, await lookupCompany(url.searchParams.get("code")));
+    if (req.method === "GET" && url.pathname === "/api/lookup/vat") return json(res, 200, await checkVatCode(url.searchParams.get("code")));
     if (url.pathname.startsWith("/api/")) {
       const task = apiQueue
         .then(() => handleApi(req, res, url))

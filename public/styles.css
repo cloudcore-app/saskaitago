@@ -3136,3 +3136,197 @@ html[data-theme="dark"] .dashboard-stat-icon.violet {
     width: 100%;
   }
 }
+
+/* Registry lookup buttons next to company and VAT code inputs */
+.input-action {
+  display: flex;
+  gap: 6px;
+  min-width: 0;
+}
+.input-action input {
+  flex: 1;
+  min-width: 0;
+}
+.input-action-button {
+  flex: none;
+  height: 36px;
+  padding: 0 10px;
+  font-size: 12.5px;
+  white-space: nowrap;
+}
+.input-action-button:disabled {
+  opacity: 0.55;
+  cursor: progress;
+}
+.lookup-status {
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--muted);
+}
+.lookup-status:empty {
+  display: none;
+}
+.lookup-status.lookup-ok {
+  color: var(--green);
+}
+.lookup-status.lookup-error {
+  color: var(--red);
+}
+
+/* Reports: i.SAF export and the individual activity journal */
+.reports-grid {
+  display: grid;
+  gap: 14px;
+}
+.reports-grid .report-card {
+  margin: 0;
+}
+.report-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 12px;
+}
+.report-controls .field {
+  flex: 1 1 170px;
+  max-width: 260px;
+}
+.report-checks {
+  display: grid;
+  gap: 8px;
+  margin-top: 14px;
+}
+.check-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  font-size: 13.5px;
+  color: var(--ink);
+  cursor: pointer;
+}
+.check-row input {
+  margin-top: 2px;
+  accent-color: var(--blue);
+}
+.report-summary,
+#ivResult {
+  margin-top: 16px;
+}
+.report-stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+.report-stats.wide {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+.report-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+}
+.report-stat span {
+  font-size: 12px;
+  color: var(--muted);
+}
+.report-stat b {
+  font-size: 18px;
+  color: var(--ink);
+}
+.report-stat small {
+  font-size: 11.5px;
+  color: var(--muted);
+}
+.report-stat.strong {
+  background: var(--soft-blue);
+  border-color: transparent;
+}
+.report-stat.strong b {
+  color: var(--blue);
+}
+.report-warnings {
+  margin: 12px 0 0;
+  padding: 10px 14px 10px 30px;
+  border-radius: 8px;
+  background: #fff7e8;
+  color: #8a5a00;
+  font-size: 13px;
+  line-height: 1.5;
+}
+.report-note {
+  margin: 12px 0 0;
+  padding: 10px 14px;
+  border-radius: 8px;
+  background: var(--soft-blue);
+  color: var(--ink);
+  font-size: 13px;
+  line-height: 1.5;
+}
+.report-error {
+  color: var(--red);
+  font-size: 13.5px;
+}
+.month-bars {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  gap: 6px;
+  height: 120px;
+  margin-top: 18px;
+}
+.month-bar {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 5px;
+  min-width: 0;
+}
+.month-bar i {
+  width: 100%;
+  max-width: 34px;
+  min-height: 2px;
+  border-radius: 4px 4px 0 0;
+  background: var(--blue);
+  opacity: 0.85;
+}
+.month-bar span {
+  font-size: 11px;
+  color: var(--muted);
+}
+.report-section-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin: 22px 0 10px;
+}
+.report-section-head h3 {
+  margin: 0;
+  font-size: 15px;
+  color: var(--ink);
+}
+.journal-table tfoot td {
+  font-weight: 700;
+  border-top: 1px solid var(--line);
+}
+.report-disclaimer {
+  display: block;
+  margin-top: 12px;
+}
+html[data-theme="dark"] .report-warnings {
+  background: #3a2f17;
+  color: #f3cf82;
+}
+@media (max-width: 900px) {
+  .report-stats,
+  .report-stats.wide {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .report-section-head {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
