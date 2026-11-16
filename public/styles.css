@@ -585,11 +585,12 @@ textarea:focus {
   position: fixed;
   z-index: 10;
   inset: 0;
-  background: #161b2a75;
+  /* No backdrop-filter: on Linux the app renders without the GPU, where blurring the whole window costs
+     tens of milliseconds per frame and makes typing in dialogs lag. A darker overlay separates it instead. */
+  background: #161b2a8f;
   display: grid;
   place-items: center;
   padding: 20px;
-  backdrop-filter: blur(3px);
 }
 .modal {
   background: #fff;
@@ -2734,12 +2735,11 @@ html[data-theme="dark"] .page-button.current {
   justify-content: space-between;
   gap: 14px;
   padding: 12px 15px;
-  background: #ffffffed;
+  background: #fff;
   border: 1px solid var(--line);
   border-bottom: 0;
   border-radius: 10px 10px 0 0;
   box-shadow: 0 -6px 22px #10182812;
-  backdrop-filter: blur(8px);
   color: #858a94;
   font-size: 13px;
   z-index: 2;

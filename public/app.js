@@ -1512,7 +1512,6 @@ document.addEventListener("input", (event) => {
     input.value = input.value.toLocaleUpperCase("lt-LT");
     input.setSelectionRange(start, end);
   }
-  if (event.target.matches(".item-row input, .item-row select")) updateInvoicePreview();
 });
 $("#settingsButton").addEventListener("click", openSettings);
 $("#topSettings").addEventListener("click", openSettings);
